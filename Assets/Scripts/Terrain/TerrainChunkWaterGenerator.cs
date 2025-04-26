@@ -5,84 +5,95 @@ public class TerrainChunkWaterGenerator : MonoBehaviour
 {
     public float waterThreshold = 0f;
     public Material waterMaterial;
-
-    private GameObject waterParent;
-    private List<GameObject> waterPlanes = new List<GameObject>();
+    private GameObject waterObject;
 
     public void Initialize(float threshold, Material material)
     {
         waterThreshold = threshold;
         waterMaterial = material;
-        // Crear un parent para los planos de agua en este chunk
-        waterParent = new GameObject("Water");
-        waterParent.transform.SetParent(transform, false);
+
+        // Create a single water object for the entire chunk
+        waterObject = new GameObject("Water");
+        waterObject.transform.SetParent(transform, false);
+        waterObject.AddComponent<MeshFilter>();
+        waterObject.AddComponent<MeshRenderer>().sharedMaterial = waterMaterial;
     }
 
-    // Genera agua usando directamente la malla del terreno
+    // Generate water using the terrain mesh
     public void GenerateWaterForMesh()
     {
-        ClearWaterPlanes();
-
         MeshFilter meshFilter = transform.GetComponent<MeshFilter>();
         if (meshFilter == null || meshFilter.sharedMesh == null)
             return;
 
         Mesh terrainMesh = meshFilter.sharedMesh;
-        Vector3[] vertices = terrainMesh.vertices;
-        int[] triangles = terrainMesh.triangles;
+        Vector3[] terrainVertices = terrainMesh.vertices;
+        int[] terrainTriangles = terrainMesh.triangles;
 
-        for (int i = 0; i < triangles.Length; i += 3)
+        // Lists to build our water mesh
+        List<Vector3> waterVertices = new List<Vector3>();
+        List<int> waterTriangles = new List<int>();
+        List<Vector2> waterUVs = new List<Vector2>();
+
+        // Check each terrain triangle
+        for (int i = 0; i < terrainTriangles.Length; i += 3)
         {
-            Vector3 a = vertices[triangles[i]];
-            Vector3 b = vertices[triangles[i + 1]];
-            Vector3 c = vertices[triangles[i + 2]];
+            Vector3 a = terrainVertices[terrainTriangles[i]];
+            Vector3 b = terrainVertices[terrainTriangles[i + 1]];
+            Vector3 c = terrainVertices[terrainTriangles[i + 2]];
 
-            // Si alguno de los vértices está bajo el umbral, añadimos un triángulo de agua
+            // If any vertex is below the water threshold, add a water triangle
             if (a.y < waterThreshold || b.y < waterThreshold || c.y < waterThreshold)
             {
-                CreateWaterTriangle(a, b, c);
+                // Set all vertices to water level
+                a.y = waterThreshold;
+                b.y = waterThreshold;
+                c.y = waterThreshold;
+
+                // Add vertices
+                int vertexIndex = waterVertices.Count;
+                waterVertices.Add(a);
+                waterVertices.Add(b);
+                waterVertices.Add(c);
+
+                // Add triangle
+                waterTriangles.Add(vertexIndex);
+                waterTriangles.Add(vertexIndex + 1);
+                waterTriangles.Add(vertexIndex + 2);
+
+                // Generate simple UVs
+                waterUVs.Add(new Vector2(a.x, a.z) * 0.1f); // Scale UVs for texture tiling
+                waterUVs.Add(new Vector2(b.x, b.z) * 0.1f);
+                waterUVs.Add(new Vector2(c.x, c.z) * 0.1f);
             }
         }
-    }
 
-    private void CreateWaterTriangle(Vector3 a, Vector3 b, Vector3 c)
-    {
-        GameObject waterPlane = new GameObject("WaterTriangle");
-        // Colocar bajo el mismo parent y sin alterar posición/rotación
-        waterPlane.transform.SetParent(waterParent.transform, false);
-
-        MeshFilter meshFilter = waterPlane.AddComponent<MeshFilter>();
-        MeshRenderer meshRenderer = waterPlane.AddComponent<MeshRenderer>();
-        meshRenderer.sharedMaterial = waterMaterial;
-
-        Mesh mesh = new Mesh();
-        // Crear triángulo plano al nivel del agua
-        mesh.vertices = new Vector3[]
+        // Create the water mesh if we have triangles
+        if (waterTriangles.Count > 0)
         {
-        new Vector3(a.x, waterThreshold, a.z),
-        new Vector3(b.x, waterThreshold, b.z),
-        new Vector3(c.x, waterThreshold, c.z)
-        };
-        mesh.triangles = new int[] { 0, 1, 2 };
-        mesh.RecalculateNormals();
+            Mesh waterMesh = new Mesh();
+            waterMesh.vertices = waterVertices.ToArray();
+            waterMesh.triangles = waterTriangles.ToArray();
+            waterMesh.uv = waterUVs.ToArray();
+            waterMesh.RecalculateNormals();
 
-        meshFilter.sharedMesh = mesh;
-        waterPlanes.Add(waterPlane);
-    }
+            // Apply the mesh
+            MeshFilter waterMeshFilter = waterObject.GetComponent<MeshFilter>();
+            waterMeshFilter.sharedMesh = waterMesh;
 
-    private void ClearWaterPlanes()
-    {
-        for (int i = waterPlanes.Count - 1; i >= 0; i--)
-        {
-            if (waterPlanes[i] != null)
-                DestroyImmediate(waterPlanes[i]);
+            // Enable the water object
+            waterObject.SetActive(true);
         }
-        waterPlanes.Clear();
+        else
+        {
+            // No water in this chunk
+            waterObject.SetActive(false);
+        }
     }
 
     public void SetVisible(bool visible)
     {
-        if (waterParent != null)
-            waterParent.SetActive(visible);
+        if (waterObject != null)
+            waterObject.SetActive(visible);
     }
 }
