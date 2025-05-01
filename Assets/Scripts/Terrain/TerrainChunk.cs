@@ -34,6 +34,10 @@ public class TerrainChunk
     float waterThreshold;
     Material waterMaterial;
 
+    // Variables para el bioma
+    public BiomeSystem.BiomeData biomeData;
+    private bool biomeDataReceived;
+
     public TerrainChunk(Vector2 coord, HeightMapSettings heightMapSettings, MeshSettings meshSettings, LODInfo[] detailLevels,
                          int colliderLODIndex, Transform parent, Transform viewer, Material material,
                          bool enableWater = false, float waterThreshold = 0, Material waterMaterial = null)
@@ -83,6 +87,20 @@ public class TerrainChunk
         }
 
         maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
+
+        // Obtener información del bioma para el centro del chunk
+        Vector3 chunkWorldPos = new Vector3(position.x, 0, position.y);
+        LoadBiomeData(chunkWorldPos);
+
+        // Añadir componente para mostrar información del bioma en el editor
+        meshObject.AddComponent<TerrainChunkBiomeDebug>().chunk = this;
+    }
+
+    private void LoadBiomeData(Vector3 position)
+    {
+        // Cargar datos de bioma para esta posición
+        biomeData = BiomeSystem.GetBiomeData(position);
+        biomeDataReceived = true;
     }
 
     public void Load()
@@ -208,29 +226,63 @@ public class TerrainChunk
     {
         return meshObject.activeSelf;
     }
+
+    // Método para obtener la posición central del chunk en el mundo
+    public Vector3 GetWorldPosition()
+    {
+        return meshObject.transform.position;
+    }
 }
-class LODMesh {
 
-	public Mesh mesh;
-	public bool hasRequestedMesh;
-	public bool hasMesh;
-	int lod;
-	public event System.Action updateCallback;
+// Componente para mostrar información del bioma en el editor
+public class TerrainChunkBiomeDebug : MonoBehaviour
+{
+    public TerrainChunk chunk;
 
-	public LODMesh(int lod) {
-		this.lod = lod;
-	}
+    private void OnDrawGizmos()
+    {
+        if (chunk == null || !chunk.IsVisible())
+            return;
 
-	void OnMeshDataReceived(object meshDataObject) {
-		mesh = ((MeshData)meshDataObject).CreateMesh ();
-		hasMesh = true;
+#if UNITY_EDITOR
+        // Muestra un pequeño marcador en el centro del chunk
+        float gizmoSize = 1f;
+        Vector3 centerPos = chunk.GetWorldPosition();
+        UnityEditor.Handles.color = chunk.biomeData.biomeColor;
+        UnityEditor.Handles.DrawWireCube(centerPos, Vector3.one * gizmoSize);
 
-		updateCallback ();
-	}
+        // Etiqueta con información del bioma
+        UnityEditor.Handles.Label(centerPos + Vector3.up * gizmoSize * 1.5f,
+            $"Chunk {chunk.coord}\nTemp: {chunk.biomeData.temperature:F2}\nHumidity: {chunk.biomeData.humidity:F2}\nBioma: {chunk.biomeData.biomeName}");
+#endif
+    }
+}
 
-	public void RequestMesh(HeightMap heightMap, MeshSettings meshSettings) {
-		hasRequestedMesh = true;
-		ThreadedDataRequester.RequestData (() => MeshGenerator.GenerateTerrainMesh (heightMap.values, meshSettings, lod), OnMeshDataReceived);
-	}
+class LODMesh
+{
 
+    public Mesh mesh;
+    public bool hasRequestedMesh;
+    public bool hasMesh;
+    int lod;
+    public event System.Action updateCallback;
+
+    public LODMesh(int lod)
+    {
+        this.lod = lod;
+    }
+
+    void OnMeshDataReceived(object meshDataObject)
+    {
+        mesh = ((MeshData)meshDataObject).CreateMesh();
+        hasMesh = true;
+
+        updateCallback();
+    }
+
+    public void RequestMesh(HeightMap heightMap, MeshSettings meshSettings)
+    {
+        hasRequestedMesh = true;
+        ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, lod), OnMeshDataReceived);
+    }
 }

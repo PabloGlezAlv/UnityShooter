@@ -20,6 +20,11 @@ public class TerrainGenerator : MonoBehaviour
     public float waterThreshold = 0f;
     public Material waterMaterial;
 
+    // Biome system settings
+    [Header("Biome Settings")]
+    public float temperatureNoiseScale = 0.01f;
+    public float humidityNoiseScale = 0.01f;
+
     Vector2 viewerPosition;
     Vector2 viewerPositionOld;
     float meshWorldSize;
@@ -29,11 +34,21 @@ public class TerrainGenerator : MonoBehaviour
 
     void Start()
     {
+        // Inicializar y configurar el sistema de biomas
+        BiomeSystem.Initialize();
+        BiomeSystem.ConfigureNoiseSettings(temperatureNoiseScale, humidityNoiseScale);
+
         textureSettings.ApplyToMaterial(mapMaterial);
         textureSettings.UpdateMeshHeights(mapMaterial, heightMapSettings.minHeight, heightMapSettings.maxHeight);
         float maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
         meshWorldSize = meshSettings.meshWorldSize;
         chunksVisibleInViewDst = Mathf.RoundToInt(maxViewDst / meshWorldSize);
+
+        // Añadir componente para mostrar información del bioma del jugador
+        if (viewer != null && viewer.GetComponent<PlayerBiomeInfo>() == null)
+        {
+            viewer.gameObject.AddComponent<PlayerBiomeInfo>();
+        }
 
         UpdateVisibleChunks();
     }
@@ -81,7 +96,7 @@ public class TerrainGenerator : MonoBehaviour
                     }
                     else
                     {
-                        // Crear nuevo chunk con soporte para agua
+                        // Crear nuevo chunk con soporte para agua y biomas
                         TerrainChunk newChunk = new TerrainChunk(
                             viewedChunkCoord,
                             heightMapSettings,
@@ -91,7 +106,7 @@ public class TerrainGenerator : MonoBehaviour
                             transform,
                             viewer,
                             mapMaterial,
-                            enableWater,  // Pasar configuración de agua
+                            enableWater,
                             waterThreshold,
                             waterMaterial
                         );
@@ -119,15 +134,18 @@ public class TerrainGenerator : MonoBehaviour
 }
 
 [System.Serializable]
-public struct LODInfo {
-	[Range(0,MeshSettings.numSupportedLODs-1)]
-	public int lod;
-	public float visibleDstThreshold;
+public struct LODInfo
+{
+    [Range(0, MeshSettings.numSupportedLODs - 1)]
+    public int lod;
+    public float visibleDstThreshold;
 
 
-	public float sqrVisibleDstThreshold {
-		get {
-			return visibleDstThreshold * visibleDstThreshold;
-		}
-	}
+    public float sqrVisibleDstThreshold
+    {
+        get
+        {
+            return visibleDstThreshold * visibleDstThreshold;
+        }
+    }
 }
