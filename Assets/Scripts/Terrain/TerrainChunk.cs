@@ -26,7 +26,7 @@ public class TerrainChunk
     float maxViewDst;
 
     HeightMapSettings heightMapSettings;
-    MeshSettings meshSettings;
+    public MeshSettings MeshSettings;
     Transform viewer;
 
     // Variables para el agua
@@ -46,7 +46,7 @@ public class TerrainChunk
         this.detailLevels = detailLevels;
         this.colliderLODIndex = colliderLODIndex;
         this.heightMapSettings = heightMapSettings;
-        this.meshSettings = meshSettings;
+        this.MeshSettings = meshSettings;
         this.viewer = viewer;
 
         // Configuración del agua
@@ -105,7 +105,7 @@ public class TerrainChunk
 
     public void Load()
     {
-        ThreadedDataRequester.RequestData(() => HeightMapGenerator.GenerateHeightMap(meshSettings.numVertsPerLine, meshSettings.numVertsPerLine, heightMapSettings, sampleCentre), OnHeightMapReceived);
+        ThreadedDataRequester.RequestData(() => HeightMapGenerator.GenerateHeightMap(MeshSettings.numVertsPerLine, MeshSettings.numVertsPerLine, heightMapSettings, sampleCentre), OnHeightMapReceived);
     }
 
     void OnHeightMapReceived(object heightMapObject)
@@ -170,7 +170,7 @@ public class TerrainChunk
                     }
                     else if (!lodMesh.hasRequestedMesh)
                     {
-                        lodMesh.RequestMesh(heightMap, meshSettings);
+                        lodMesh.RequestMesh(heightMap, MeshSettings);
                     }
                 }
             }
@@ -196,7 +196,7 @@ public class TerrainChunk
             {
                 if (!lodMeshes[colliderLODIndex].hasRequestedMesh)
                 {
-                    lodMeshes[colliderLODIndex].RequestMesh(heightMap, meshSettings);
+                    lodMeshes[colliderLODIndex].RequestMesh(heightMap, MeshSettings);
                 }
             }
 
@@ -245,15 +245,43 @@ public class TerrainChunkBiomeDebug : MonoBehaviour
             return;
 
 #if UNITY_EDITOR
-        // Muestra un pequeño marcador en el centro del chunk
-        float gizmoSize = 1f;
-        Vector3 centerPos = chunk.GetWorldPosition();
+        // Obtener tamaño y posición del chunk
+        float meshWorldSize = chunk.MeshSettings.meshWorldSize;
+        Vector3 chunkPosition = chunk.GetWorldPosition();
+
+        // Calcular esquinas del chunk
+        Vector3[] corners = new Vector3[4];
+        corners[0] = chunkPosition; // Esquina inferior izquierda
+        corners[1] = chunkPosition + Vector3.right * meshWorldSize; // Esquina inferior derecha
+        corners[2] = corners[1] + Vector3.forward * meshWorldSize; // Esquina superior derecha
+        corners[3] = chunkPosition + Vector3.forward * meshWorldSize; // Esquina superior izquierda
+
+        // Dibujar contorno del chunk
         UnityEditor.Handles.color = chunk.biomeData.biomeColor;
-        UnityEditor.Handles.DrawWireCube(centerPos, Vector3.one * gizmoSize);
+        for (int i = 0; i < 4; i++)
+        {
+            UnityEditor.Handles.DrawLine(corners[i], corners[(i + 1) % 4]);
+        }
+
+        // Calcular centro del chunk
+        Vector3 center = chunkPosition +
+                        new Vector3(meshWorldSize / 2, 0, meshWorldSize / 2);
 
         // Etiqueta con información del bioma
-        UnityEditor.Handles.Label(centerPos + Vector3.up * gizmoSize * 1.5f,
-            $"Chunk {chunk.coord}\nTemp: {chunk.biomeData.temperature:F2}\nHumidity: {chunk.biomeData.humidity:F2}\nBioma: {chunk.biomeData.biomeName}");
+        string biomeInfo = $"Chunk {chunk.coord}\n" +
+                          $"Temp: {chunk.biomeData.temperature:F2}\n" +
+                          $"Humidity: {chunk.biomeData.humidity:F2}\n" +
+                          $"Bioma: {chunk.biomeData.biomeName}";
+
+        UnityEditor.Handles.Label(
+            center + Vector3.up * (meshWorldSize * 0.1f),
+            biomeInfo,
+            new GUIStyle()
+            {
+                normal = new GUIStyleState() { textColor = Color.white },
+                fontSize = 12
+            }
+        );
 #endif
     }
 }
