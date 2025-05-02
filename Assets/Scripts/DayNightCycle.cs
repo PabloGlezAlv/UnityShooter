@@ -42,6 +42,15 @@ public class DayNightCycle : MonoBehaviour
     [Tooltip("Intensidad máxima de la luz lunar")]
     public float maxMoonIntensity = 0.3f;
 
+    [Header("Configuración de Transición")]
+    [Tooltip("Duración de la transición día-noche en proporción del día (0-0.2)")]
+    [Range(0.01f, 0.2f)]
+    public float transitionDuration = 0.1f; // 10% del día
+
+    [Tooltip("Hora del día en que comienza el atardecer (0-1)")]
+    [Range(0.4f, 0.6f)]
+    public float sunsetTime = 0.5f; // Medio día
+
     [Tooltip("Duración del ciclo lunar en días")]
     public float lunarCycleDuration = 30f; // Duración del ciclo lunar en días
 
@@ -211,34 +220,73 @@ public class DayNightCycle : MonoBehaviour
             moonLight.transform.rotation = moonStartRotation * Quaternion.Euler(new Vector3(moonAngle, 0, 0));
         }
 
-        // Cambiar el color e intensidad de la luz solar según el gradiente y curva
-        if (sunColorGradient != null && sunIntensityCurve != null)
+        // Calcular los momentos de transición para un blend suave
+        float sunriseStart = sunsetTime - 0.5f; // Medio día antes del atardecer
+        if (sunriseStart < 0) sunriseStart += 1f;
+
+        float sunriseEnd = sunriseStart + transitionDuration;
+        if (sunriseEnd > 1f) sunriseEnd -= 1f;
+
+        float sunsetEnd = (sunsetTime + transitionDuration) % 1f;
+
+        // Determinar si estamos en una transición y calcular factores de blend
+        float sunFactor = 1f;
+        float moonFactor = 1f;
+
+        // Factor del sol (amanecer: 0->1, atardecer: 1->0)
+        if (time >= sunriseStart && time <= sunriseEnd)
         {
-            sunLight.color = sunColorGradient.Evaluate(time);
-            sunLight.intensity = sunIntensityCurve.Evaluate(time) * maxSunIntensity;
+            // Amanecer (luna se desvanece, sol aparece)
+            sunFactor = Mathf.InverseLerp(sunriseStart, sunriseEnd, time);
+            moonFactor = 1f - sunFactor;
+        }
+        else if (time >= sunsetTime && time <= sunsetEnd)
+        {
+            // Atardecer (sol se desvanece, luna aparece)
+            sunFactor = Mathf.InverseLerp(sunsetEnd, sunsetTime, time);
+            moonFactor = 1f - sunFactor;
+        }
+        else if (time > sunriseEnd && time < sunsetTime)
+        {
+            // Día pleno
+            sunFactor = 1f;
+            moonFactor = 0f;
+        }
+        else
+        {
+            // Noche plena
+            sunFactor = 0f;
+            moonFactor = 1f;
         }
 
-        // Actualizar luz lunar
-        if (moonLight != null && moonColorGradient != null && moonIntensityCurve != null)
-        {
-            moonLight.color = moonColorGradient.Evaluate(time);
+        // Aplicar factores de blend a las intensidades base
+        float baseSunIntensity = sunIntensityCurve.Evaluate(time) * maxSunIntensity;
+        sunLight.intensity = baseSunIntensity * sunFactor;
+        sunLight.color = sunColorGradient.Evaluate(time);
 
-            // La intensidad lunar depende tanto de la hora del día como de la fase lunar
+        if (moonLight != null)
+        {
             float baseMoonIntensity = moonIntensityCurve.Evaluate(time) * maxMoonIntensity;
 
             // Ajustar intensidad según la fase lunar (máxima en luna llena)
             float phaseIntensityFactor = GetLunarPhaseIntensityFactor(currentLunarPhase);
-            moonLight.intensity = baseMoonIntensity * phaseIntensityFactor;
 
-            // Actualizar color/propiedades según la fase lunar
+            // Aplicar ambos factores: fase lunar y tiempo del día
+            moonLight.intensity = baseMoonIntensity * phaseIntensityFactor * moonFactor;
+            moonLight.color = moonColorGradient.Evaluate(time);
+
+            // Actualizar visuales de la fase lunar
             UpdateMoonPhaseVisuals(currentLunarPhase);
         }
 
-        // Actualizar estrellas
+        // Actualizar estrellas con transición suave
         if (starsObject != null && starsIntensityCurve != null)
         {
-            // Si tenemos un objeto de estrellas, ajustar su intensidad
-            float starsIntensity = starsIntensityCurve.Evaluate(time);
+            // Intensidad base de las estrellas según la curva
+            float baseStarsIntensity = starsIntensityCurve.Evaluate(time);
+
+            // Aplicar factor de blend similar al de la luna (más visible en la noche)
+            float starsIntensity = baseStarsIntensity * moonFactor;
 
             // Si el objeto de estrellas tiene un componente Renderer
             Renderer starsRenderer = starsObject.GetComponent<Renderer>();
@@ -274,7 +322,8 @@ public class DayNightCycle : MonoBehaviour
             {
                 float dayExposure = 1.0f;
                 float nightExposure = 0.1f;
-                float exposure = Mathf.Lerp(nightExposure, dayExposure, sunIntensityCurve.Evaluate(time));
+                // Usar una mezcla de factores sol/luna para la exposición
+                float exposure = Mathf.Lerp(nightExposure, dayExposure, sunFactor);
                 skyboxMaterial.SetFloat("_Exposure", exposure);
             }
         }
@@ -356,6 +405,14 @@ public class DayNightCycle : MonoBehaviour
     {
         currentLunarPhase = Mathf.Clamp01(phase);
         UpdateMoonPhaseVisuals(currentLunarPhase);
+    }
+
+    /// <summary>
+    /// Establece la duración de las transiciones día-noche
+    /// </summary>
+    public void SetTransitionDuration(float duration)
+    {
+        transitionDuration = Mathf.Clamp(duration, 0.01f, 0.2f);
     }
 
     /// <summary>
