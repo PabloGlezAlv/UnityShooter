@@ -123,15 +123,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Inventory",
-                    "type": "Button",
-                    "id": "2c689219-b05e-4d01-b4fc-fa581705f767",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "WeaponWheel",
                     "type": "Value",
                     "id": "cd06061b-c641-474d-959d-0f00ea09e1b3",
@@ -139,6 +130,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Inventory",
+                    "type": "Button",
+                    "id": "e274693d-38a2-4205-8e40-09e5c8bcd53f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -606,23 +606,23 @@
                 },
                 {
                     "name": "",
-                    "id": "172c1fb8-a8fa-490d-a68e-aa7a317ff02a",
-                    "path": "<Keyboard>/tab",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Inventory",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "2d2e693b-88c5-4a6a-8239-a8c0d44aca02",
                     "path": "<Mouse>/scroll",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "WeaponWheel",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "29bf60b6-d1f8-437c-9a93-9a29ac16be2f",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Inventory",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -1139,6 +1139,74 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "TrackedDeviceOrientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Inventory",
+            "id": "3e60f454-0dd0-4a03-845c-9d86e9c12e89",
+            "actions": [
+                {
+                    "name": "Rotate",
+                    "type": "Button",
+                    "id": "73199cbd-9c16-4c2a-86b3-ec0015e8a5a0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "QuickMove",
+                    "type": "Button",
+                    "id": "aacdbc29-ee26-4dc5-90ef-6a70615b190c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SplitStack",
+                    "type": "Button",
+                    "id": "c1feb44a-22ad-4e46-9da1-947e721be3a6",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "0ae8da54-d52c-49c9-9b57-babee4c54400",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Rotate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d7eec470-aaa4-4359-a38e-8fedf091eb2b",
+                    "path": "<Keyboard>/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "QuickMove",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3ff05fb1-b603-4133-91ce-b93b99964f2a",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SplitStack",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -78,10 +78,7 @@ public class InputHandler : MonoBehaviour
     private void Update()
     {
         // Only process inventory inputs when inventory is open
-        if (!inventorySystem.IsInventoryOpen) return;
-
-        // Legacy Input System as fallback
-        CheckLegacyInputs();
+        if (!inventorySystem.IsInventoryOpen()) return;
 
         // Process hovering for tooltips
         ProcessHovering();
@@ -99,26 +96,6 @@ public class InputHandler : MonoBehaviour
             RotateSelectedItem();
         }
     }
-
-    // Legacy Input System fallback
-    private void CheckLegacyInputs()
-    {
-        // Check for rotate key
-        if (Input.GetKeyDown(rotateItemKey))
-        {
-            if (selectedItem != null && selectedItem.IsRotatable)
-            {
-                RotateSelectedItem();
-            }
-        }
-
-        // Check if we need to cancel any operation
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            CancelCurrentOperation();
-        }
-    }
-
     // Process hovering for tooltips
     private void ProcessHovering()
     {

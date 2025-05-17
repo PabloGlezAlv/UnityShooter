@@ -117,6 +117,11 @@ public class InventorySystem : MonoBehaviour
         return false;
     }
 
+    public bool IsInventoryOpen()
+    {
+        return isInventoryOpen;
+    }
+
     // Métodos para interactuar con el equipamiento
     public void EquipItem(InventoryItem item, string slotName)
     {
