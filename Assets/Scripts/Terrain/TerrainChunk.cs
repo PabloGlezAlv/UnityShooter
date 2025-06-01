@@ -140,7 +140,7 @@ public class TerrainChunk
 
     public void Load()
     {
-        ThreadedDataRequester.RequestData(() => HeightMapGenerator.GenerateHeightMap(MeshSettings.numVertsPerLine, MeshSettings.numVertsPerLine, heightMapSettings, sampleCentre), OnHeightMapReceived);
+        ThreadedDataRequester.RequestData(() => HeightMapGenerator.GenerateHeightMap(MeshSettings.numVertsPerLine, MeshSettings.numVertsPerLine, heightMapSettings, sampleCentre, biomeData), OnHeightMapReceived);
     }
 
     void OnHeightMapReceived(object heightMapObject)
@@ -305,18 +305,21 @@ public class TerrainChunkBiomeDebug : MonoBehaviour
     {
         if (chunk == null || !chunk.IsVisible())
             return;
-
 #if UNITY_EDITOR
         // Obtener tamaño y posición del chunk
         float meshWorldSize = chunk.MeshSettings.meshWorldSize;
         Vector3 chunkPosition = chunk.GetWorldPosition();
 
-        // Calcular esquinas del chunk
+        // Calcular el centro del chunk PRIMERO
+        Vector3 center = chunkPosition;
+
+        // Calcular esquinas del chunk basadas en el centro
+        Vector3 halfSize = new Vector3(meshWorldSize / 2, 0, meshWorldSize / 2);
         Vector3[] corners = new Vector3[4];
-        corners[0] = chunkPosition; // Esquina inferior izquierda
-        corners[1] = chunkPosition + Vector3.right * meshWorldSize; // Esquina inferior derecha
-        corners[2] = corners[1] + Vector3.forward * meshWorldSize; // Esquina superior derecha
-        corners[3] = chunkPosition + Vector3.forward * meshWorldSize; // Esquina superior izquierda
+        corners[0] = center - halfSize; // Esquina inferior izquierda
+        corners[1] = center + new Vector3(halfSize.x, 0, -halfSize.z); // Esquina inferior derecha
+        corners[2] = center + halfSize; // Esquina superior derecha
+        corners[3] = center + new Vector3(-halfSize.x, 0, halfSize.z); // Esquina superior izquierda
 
         // Dibujar contorno del chunk
         UnityEditor.Handles.color = chunk.biomeData.biomeColor;
@@ -325,23 +328,34 @@ public class TerrainChunkBiomeDebug : MonoBehaviour
             UnityEditor.Handles.DrawLine(corners[i], corners[(i + 1) % 4]);
         }
 
-        // Calcular centro del chunk
-        Vector3 center = chunkPosition +
-                        new Vector3(meshWorldSize / 2, 0, meshWorldSize / 2);
+        // Dibujar una cruz en el centro para marcar la posición exacta
+        float crossSize = meshWorldSize * 0.05f;
+        UnityEditor.Handles.DrawLine(
+            center + Vector3.left * crossSize,
+            center + Vector3.right * crossSize
+        );
+        UnityEditor.Handles.DrawLine(
+            center + Vector3.back * crossSize,
+            center + Vector3.forward * crossSize
+        );
 
-        // Etiqueta con información del bioma
+        // Etiqueta con información del bioma EN EL CENTRO
         string biomeInfo = $"Chunk {chunk.coord}\n" +
                           $"Temp: {chunk.biomeData.temperature:F2}\n" +
                           $"Humidity: {chunk.biomeData.humidity:F2}\n" +
                           $"Bioma: {chunk.biomeData.biomeName}";
 
+        // Posicionar el label exactamente en el centro del chunk
+        Vector3 labelPosition = center + Vector3.up * (meshWorldSize * 0.1f);
+
         UnityEditor.Handles.Label(
-            center + Vector3.up * (meshWorldSize * 0.1f),
+            labelPosition,
             biomeInfo,
             new GUIStyle()
             {
                 normal = new GUIStyleState() { textColor = Color.white },
-                fontSize = 12
+                fontSize = 12,
+                alignment = TextAnchor.MiddleCenter // Centrar el texto
             }
         );
 #endif
