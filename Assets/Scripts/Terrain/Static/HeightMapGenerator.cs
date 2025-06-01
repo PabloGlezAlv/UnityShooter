@@ -4,30 +4,52 @@ using UnityEngine;
 
 public static class HeightMapGenerator {
 
-	public static HeightMap GenerateHeightMap(int width, int height, HeightMapSettings settings, Vector2 sampleCentre) {
-		float[,] values = Noise.GenerateNoiseMap (width, height, settings.noiseSettings, sampleCentre);
+    public static HeightMap GenerateHeightMap(int width, int height, HeightMapSettings settings, Vector2 sampleCentre, BiomeSystem.BiomeData biomeData = default)
+    {
+        float[,] values = Noise.GenerateNoiseMap(width, height, settings.noiseSettings, sampleCentre);
 
-		AnimationCurve heightCurve_threadsafe = new AnimationCurve (settings.heightCurve.keys);
+        // Obtener configuración del bioma si está disponible
+        float biomeHeightMultiplier = 1f;
+        AnimationCurve biomeCurve = settings.heightCurve;
 
-		float minValue = float.MaxValue;
-		float maxValue = float.MinValue;
+        if (!string.IsNullOrEmpty(biomeData.biomeName))
+        {
+            var biomes = BiomeSystem.GetAllBiomes();
+            var currentBiome = biomes.Find(b => b.name == biomeData.biomeName);
+            if (currentBiome != null)
+            {
+                biomeHeightMultiplier = currentBiome.heightMultiplier;
+                biomeCurve = new AnimationCurve(currentBiome.heightCurve.keys);
+            }
+        }
+        else
+        {
+            biomeCurve = new AnimationCurve(settings.heightCurve.keys);
+        }
 
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				values [i, j] *= heightCurve_threadsafe.Evaluate (values [i, j]) * settings.heightMultiplier;
+        float minValue = float.MaxValue;
+        float maxValue = float.MinValue;
 
-				if (values [i, j] > maxValue) {
-					maxValue = values [i, j];
-				}
-				if (values [i, j] < minValue) {
-					minValue = values [i, j];
-				}
-			}
-		}
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                // APLICAR MODIFICADORES DEL BIOMA
+                values[i, j] *= biomeCurve.Evaluate(values[i, j]) * settings.heightMultiplier * biomeHeightMultiplier;
 
-		return new HeightMap (values, minValue, maxValue);
-	}
+                if (values[i, j] > maxValue)
+                {
+                    maxValue = values[i, j];
+                }
+                if (values[i, j] < minValue)
+                {
+                    minValue = values[i, j];
+                }
+            }
+        }
 
+        return new HeightMap(values, minValue, maxValue);
+    }
 }
 
 public struct HeightMap {

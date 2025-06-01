@@ -61,10 +61,12 @@ public static class BiomeSystem
             maxTemperature = 0.4f,
             minHumidity = 0.7f,
             maxHumidity = 1.0f,
-            biomeColor = new Color(0.0f, 0.3f, 0.8f) // Azul
+            biomeColor = new Color(0.0f, 0.3f, 0.8f),
+            heightMultiplier = 0.3f, // Más bajo
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.2f)
         });
 
-        // Desierto (caliente y seco)
+        // Desierto
         biomes.Add(new BiomeDefinition
         {
             name = "Desierto",
@@ -72,7 +74,22 @@ public static class BiomeSystem
             maxTemperature = 1.0f,
             minHumidity = 0.0f,
             maxHumidity = 0.2f,
-            biomeColor = new Color(0.85f, 0.8f, 0.3f) // Amarillo arena
+            biomeColor = new Color(0.85f, 0.8f, 0.3f),
+            heightMultiplier = 0.8f, // Altura media
+            heightCurve = AnimationCurve.Linear(0, 0, 1, 1)
+        });
+
+        // Montaña
+        biomes.Add(new BiomeDefinition
+        {
+            name = "Montaña",
+            minTemperature = 0.0f,
+            maxTemperature = 0.3f,
+            minHumidity = 0.3f,
+            maxHumidity = 0.7f,
+            biomeColor = new Color(0.5f, 0.5f, 0.5f),
+            heightMultiplier = 2.0f, // Mucho más alto
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 1.5f)
         });
 
         // Llanura (temperatura media, humedad media-baja)
@@ -83,7 +100,9 @@ public static class BiomeSystem
             maxTemperature = 0.7f,
             minHumidity = 0.2f,
             maxHumidity = 0.5f,
-            biomeColor = new Color(0.65f, 0.8f, 0.1f) // Verde amarillento
+            biomeColor = new Color(0.65f, 0.8f, 0.1f), // Verde amarillento
+            heightMultiplier = 0.6f, // Altura baja-media
+            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.3f) // Terreno plano
         });
 
         // Jungla (caliente y muy húmedo)
@@ -94,7 +113,9 @@ public static class BiomeSystem
             maxTemperature = 1.0f,
             minHumidity = 0.7f,
             maxHumidity = 1.0f,
-            biomeColor = new Color(0.0f, 0.6f, 0.0f) // Verde intenso
+            biomeColor = new Color(0.0f, 0.6f, 0.0f), // Verde intenso
+            heightMultiplier = 0.9f, // Altura media-alta
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.8f) // Terreno ondulado
         });
 
         // Bosque (temperatura media, humedad media-alta)
@@ -105,18 +126,9 @@ public static class BiomeSystem
             maxTemperature = 0.6f,
             minHumidity = 0.5f,
             maxHumidity = 0.8f,
-            biomeColor = new Color(0.2f, 0.5f, 0.2f) // Verde oscuro
-        });
-
-        // Montaña (frío y humedad variable)
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Montaña",
-            minTemperature = 0.0f,
-            maxTemperature = 0.3f,
-            minHumidity = 0.3f,
-            maxHumidity = 0.7f,
-            biomeColor = new Color(0.5f, 0.5f, 0.5f) // Gris
+            biomeColor = new Color(0.2f, 0.5f, 0.2f), // Verde oscuro
+            heightMultiplier = 0.7f, // Altura media
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.6f) // Colinas suaves
         });
 
         // Tundra (frío y seco)
@@ -127,7 +139,9 @@ public static class BiomeSystem
             maxTemperature = 0.3f,
             minHumidity = 0.0f,
             maxHumidity = 0.3f,
-            biomeColor = new Color(0.8f, 0.8f, 0.8f) // Blanco grisáceo
+            biomeColor = new Color(0.8f, 0.8f, 0.8f), // Blanco grisáceo
+            heightMultiplier = 0.5f, // Altura baja
+            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.4f) // Terreno relativamente plano
         });
 
         // Pantano (temperatura media, muy húmedo)
@@ -138,7 +152,9 @@ public static class BiomeSystem
             maxTemperature = 0.7f,
             minHumidity = 0.8f,
             maxHumidity = 1.0f,
-            biomeColor = new Color(0.4f, 0.5f, 0.3f) // Verde parduzco
+            biomeColor = new Color(0.4f, 0.5f, 0.3f), // Verde parduzco
+            heightMultiplier = 0.4f, // Altura muy baja (pantanos suelen ser bajos)
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.1f) // Terreno muy plano y bajo
         });
     }
 

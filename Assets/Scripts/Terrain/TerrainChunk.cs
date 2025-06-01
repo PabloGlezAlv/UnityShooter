@@ -35,6 +35,7 @@ public class TerrainChunk
     Material waterMaterial;
 
     // Variables para el bioma
+    private BiomeSystem.BiomeData previousBiomeData;
     public BiomeSystem.BiomeData biomeData;
     private bool biomeDataReceived;
 
@@ -95,12 +96,46 @@ public class TerrainChunk
         // Añadir componente para mostrar información del bioma en el editor
         meshObject.AddComponent<TerrainChunkBiomeDebug>().chunk = this;
     }
+    private void RegenerateWithNewBiome()
+    {
+        heightMapReceived = false;
+        hasSetCollider = false;
+        previousLODIndex = -1;
 
+        // Limpiar meshes LOD existentes
+        for (int i = 0; i < lodMeshes.Length; i++)
+        {
+            lodMeshes[i].hasRequestedMesh = false;
+            lodMeshes[i].hasMesh = false;
+            lodMeshes[i].mesh = null;
+        }
+
+        // Solicitar nuevo heightmap con datos de bioma
+        ThreadedDataRequester.RequestData(() =>
+            HeightMapGenerator.GenerateHeightMap(
+                MeshSettings.numVertsPerLine,
+                MeshSettings.numVertsPerLine,
+                heightMapSettings,
+                sampleCentre,
+                biomeData), // PASAR DATOS DE BIOMA
+            OnHeightMapReceived);
+    }
     private void LoadBiomeData(Vector3 position)
     {
-        // Cargar datos de bioma para esta posición
-        biomeData = BiomeSystem.GetBiomeData(position);
-        biomeDataReceived = true;
+        BiomeSystem.BiomeData newBiomeData = BiomeSystem.GetBiomeData(position);
+
+        // Si el bioma cambió, regenerar el heightmap
+        if (!biomeDataReceived || newBiomeData.biomeName != biomeData.biomeName)
+        {
+            biomeData = newBiomeData;
+            biomeDataReceived = true;
+
+            // REGENERAR HEIGHTMAP CON NUEVO BIOMA
+            if (heightMapReceived)
+            {
+                RegenerateWithNewBiome();
+            }
+        }
     }
 
     public void Load()
@@ -113,13 +148,37 @@ public class TerrainChunk
         this.heightMap = (HeightMap)heightMapObject;
         heightMapReceived = true;
 
-        // Generar agua si es necesario
+        // APLICAR MATERIAL DEL BIOMA
+        ApplyBiomeMaterial();
+
         if (enableWater && waterGenerator != null)
         {
             waterGenerator.GenerateWaterForMesh();
         }
 
         UpdateTerrainChunk();
+    }
+
+    // NUEVO MÉTODO - Aplicar material del bioma
+    private void ApplyBiomeMaterial()
+    {
+        if (biomeDataReceived && !string.IsNullOrEmpty(biomeData.biomeName))
+        {
+            var biomes = BiomeSystem.GetAllBiomes();
+            var currentBiome = biomes.Find(b => b.name == biomeData.biomeName);
+
+            if (currentBiome != null && currentBiome.terrainMaterial != null)
+            {
+                meshRenderer.material = currentBiome.terrainMaterial;
+            }
+            else
+            {
+                // Crear material temporal con color del bioma
+                Material tempMaterial = new Material(meshRenderer.material);
+                tempMaterial.color = biomeData.biomeColor;
+                meshRenderer.material = tempMaterial;
+            }
+        }
     }
 
     Vector2 viewerPosition
@@ -132,6 +191,9 @@ public class TerrainChunk
 
     public void UpdateTerrainChunk()
     {
+        Vector3 currentWorldPos = new Vector3(sampleCentre.x, 0, sampleCentre.y);
+        LoadBiomeData(currentWorldPos);
+
         if (heightMapReceived)
         {
             float viewerDstFromNearestEdge = Mathf.Sqrt(bounds.SqrDistance(viewerPosition));

@@ -13,6 +13,12 @@ public class BiomeDefinition
     public float maxHumidity;
     public Color biomeColor;
 
+    [Header("Terrain Properties")]
+    public float heightMultiplier = 1f;        // Multiplicador de altura
+    public AnimationCurve heightCurve = AnimationCurve.Linear(0, 0, 1, 1); // Curva de altura del bioma
+    public Material terrainMaterial;           // Material específico del bioma
+    public float noiseScale = 1f;              // Escala del ruido específica del bioma
+
     // Método para comprobar si unas condiciones climáticas pertenecen a este bioma
     public bool MatchesConditions(float temperature, float humidity)
     {
