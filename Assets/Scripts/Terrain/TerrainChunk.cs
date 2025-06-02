@@ -117,7 +117,7 @@ public class TerrainChunk
                 MeshSettings.numVertsPerLine,
                 heightMapSettings,
                 sampleCentre,
-                biomeData), // PASAR DATOS DE BIOMA
+                biomeData),
             OnHeightMapReceived);
     }
     private void LoadBiomeData(Vector3 position)
@@ -130,7 +130,6 @@ public class TerrainChunk
             biomeData = newBiomeData;
             biomeDataReceived = true;
 
-            // REGENERAR HEIGHTMAP CON NUEVO BIOMA
             if (heightMapReceived)
             {
                 RegenerateWithNewBiome();
@@ -140,7 +139,17 @@ public class TerrainChunk
 
     public void Load()
     {
-        ThreadedDataRequester.RequestData(() => HeightMapGenerator.GenerateHeightMap(MeshSettings.numVertsPerLine, MeshSettings.numVertsPerLine, heightMapSettings, sampleCentre, biomeData), OnHeightMapReceived);
+        // CAMBIO: Pasar datos de bioma al generador
+        ThreadedDataRequester.RequestData(() =>
+            HeightMapGenerator.GenerateHeightMap(
+                MeshSettings.numVertsPerLine,
+                MeshSettings.numVertsPerLine,
+                heightMapSettings,
+                sampleCentre,
+                biomeData 
+            ),
+            OnHeightMapReceived
+        );
     }
 
     void OnHeightMapReceived(object heightMapObject)
@@ -148,7 +157,6 @@ public class TerrainChunk
         this.heightMap = (HeightMap)heightMapObject;
         heightMapReceived = true;
 
-        // APLICAR MATERIAL DEL BIOMA
         ApplyBiomeMaterial();
 
         if (enableWater && waterGenerator != null)
@@ -159,7 +167,6 @@ public class TerrainChunk
         UpdateTerrainChunk();
     }
 
-    // NUEVO MÉTODO - Aplicar material del bioma
     private void ApplyBiomeMaterial()
     {
         if (biomeDataReceived && !string.IsNullOrEmpty(biomeData.biomeName))

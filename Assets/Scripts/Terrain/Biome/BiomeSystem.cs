@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Static manager for biome data and climate calculations
@@ -18,6 +19,11 @@ public static class BiomeSystem
 
     // Tamaño del chunk para cálculos de bioma
     public static float chunkSize = 50f;
+
+    private static readonly object syncObj = new object();
+
+    private static Dictionary<string, Dictionary<Vector2Int, BiomeData>> neighborBiomeCache =
+    new Dictionary<string, Dictionary<Vector2Int, BiomeData>>();
 
     // Estructura para almacenar datos de bioma por chunk
     public struct BiomeData
@@ -53,70 +59,70 @@ public static class BiomeSystem
     /// </summary>
     private static void SetupDefaultBiomes()
     {
-        // Océano (frío y muy húmedo)
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Océano",
-            minTemperature = 0.0f,
-            maxTemperature = 0.4f,
-            minHumidity = 0.7f,
-            maxHumidity = 1.0f,
-            biomeColor = new Color(0.0f, 0.3f, 0.8f),
-            heightMultiplier = 0.3f, // Más bajo
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.2f)
-        });
+        //// Océano (frío y muy húmedo)
+        //biomes.Add(new BiomeDefinition
+        //{
+        //    name = "Océano",
+        //    minTemperature = 0.0f,
+        //    maxTemperature = 0.4f,
+        //    minHumidity = 0.7f,
+        //    maxHumidity = 1.0f,
+        //    biomeColor = new Color(0.0f, 0.3f, 0.8f),
+        //    heightMultiplier = 0.3f, // Más bajo
+        //    heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.2f)
+        //});
 
-        // Desierto
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Desierto",
-            minTemperature = 0.7f,
-            maxTemperature = 1.0f,
-            minHumidity = 0.0f,
-            maxHumidity = 0.2f,
-            biomeColor = new Color(0.85f, 0.8f, 0.3f),
-            heightMultiplier = 0.8f, // Altura media
-            heightCurve = AnimationCurve.Linear(0, 0, 1, 1)
-        });
+        //// Desierto
+        //biomes.Add(new BiomeDefinition
+        //{
+        //    name = "Desierto",
+        //    minTemperature = 0.7f,
+        //    maxTemperature = 1.0f,
+        //    minHumidity = 0.0f,
+        //    maxHumidity = 0.2f,
+        //    biomeColor = new Color(0.85f, 0.8f, 0.3f),
+        //    heightMultiplier = 0.8f, // Altura media
+        //    heightCurve = AnimationCurve.Linear(0, 0, 1, 1)
+        //});
 
-        // Montaña
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Montaña",
-            minTemperature = 0.0f,
-            maxTemperature = 0.3f,
-            minHumidity = 0.3f,
-            maxHumidity = 0.7f,
-            biomeColor = new Color(0.5f, 0.5f, 0.5f),
-            heightMultiplier = 2.0f, // Mucho más alto
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 1.5f)
-        });
+        //// Montaña
+        //biomes.Add(new BiomeDefinition
+        //{
+        //    name = "Montaña",
+        //    minTemperature = 0.0f,
+        //    maxTemperature = 0.3f,
+        //    minHumidity = 0.3f,
+        //    maxHumidity = 0.7f,
+        //    biomeColor = new Color(0.5f, 0.5f, 0.5f),
+        //    heightMultiplier = 2.0f, // Mucho más alto
+        //    heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 1.5f)
+        //});
 
-        // Llanura (temperatura media, humedad media-baja)
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Llanura",
-            minTemperature = 0.4f,
-            maxTemperature = 0.7f,
-            minHumidity = 0.2f,
-            maxHumidity = 0.5f,
-            biomeColor = new Color(0.65f, 0.8f, 0.1f), // Verde amarillento
-            heightMultiplier = 0.6f, // Altura baja-media
-            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.3f) // Terreno plano
-        });
+        //// Llanura (temperatura media, humedad media-baja)
+        //biomes.Add(new BiomeDefinition
+        //{
+        //    name = "Llanura",
+        //    minTemperature = 0.4f,
+        //    maxTemperature = 0.7f,
+        //    minHumidity = 0.2f,
+        //    maxHumidity = 0.5f,
+        //    biomeColor = new Color(0.65f, 0.8f, 0.1f), // Verde amarillento
+        //    heightMultiplier = 0.6f, // Altura baja-media
+        //    heightCurve = AnimationCurve.Linear(0, 0, 1, 0.3f) // Terreno plano
+        //});
 
-        // Jungla (caliente y muy húmedo)
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Jungla",
-            minTemperature = 0.7f,
-            maxTemperature = 1.0f,
-            minHumidity = 0.7f,
-            maxHumidity = 1.0f,
-            biomeColor = new Color(0.0f, 0.6f, 0.0f), // Verde intenso
-            heightMultiplier = 0.9f, // Altura media-alta
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.8f) // Terreno ondulado
-        });
+        //// Jungla (caliente y muy húmedo)
+        //biomes.Add(new BiomeDefinition
+        //{
+        //    name = "Jungla",
+        //    minTemperature = 0.7f,
+        //    maxTemperature = 1.0f,
+        //    minHumidity = 0.7f,
+        //    maxHumidity = 1.0f,
+        //    biomeColor = new Color(0.0f, 0.6f, 0.0f), // Verde intenso
+        //    heightMultiplier = 0.9f, // Altura media-alta
+        //    heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.8f) // Terreno ondulado
+        //});
 
         // Bosque (temperatura media, humedad media-alta)
         biomes.Add(new BiomeDefinition
@@ -131,31 +137,31 @@ public static class BiomeSystem
             heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.6f) // Colinas suaves
         });
 
-        // Tundra (frío y seco)
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Tundra",
-            minTemperature = 0.0f,
-            maxTemperature = 0.3f,
-            minHumidity = 0.0f,
-            maxHumidity = 0.3f,
-            biomeColor = new Color(0.8f, 0.8f, 0.8f), // Blanco grisáceo
-            heightMultiplier = 0.5f, // Altura baja
-            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.4f) // Terreno relativamente plano
-        });
+        //// Tundra (frío y seco)
+        //biomes.Add(new BiomeDefinition
+        //{
+        //    name = "Tundra",
+        //    minTemperature = 0.0f,
+        //    maxTemperature = 0.3f,
+        //    minHumidity = 0.0f,
+        //    maxHumidity = 0.3f,
+        //    biomeColor = new Color(0.8f, 0.8f, 0.8f), // Blanco grisáceo
+        //    heightMultiplier = 0.5f, // Altura baja
+        //    heightCurve = AnimationCurve.Linear(0, 0, 1, 0.4f) // Terreno relativamente plano
+        //});
 
-        // Pantano (temperatura media, muy húmedo)
-        biomes.Add(new BiomeDefinition
-        {
-            name = "Pantano",
-            minTemperature = 0.3f,
-            maxTemperature = 0.7f,
-            minHumidity = 0.8f,
-            maxHumidity = 1.0f,
-            biomeColor = new Color(0.4f, 0.5f, 0.3f), // Verde parduzco
-            heightMultiplier = 0.4f, // Altura muy baja (pantanos suelen ser bajos)
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.1f) // Terreno muy plano y bajo
-        });
+        //// Pantano (temperatura media, muy húmedo)
+        //biomes.Add(new BiomeDefinition
+        //{
+        //    name = "Pantano",
+        //    minTemperature = 0.3f,
+        //    maxTemperature = 0.7f,
+        //    minHumidity = 0.8f,
+        //    maxHumidity = 1.0f,
+        //    biomeColor = new Color(0.4f, 0.5f, 0.3f), // Verde parduzco
+        //    heightMultiplier = 0.4f, // Altura muy baja (pantanos suelen ser bajos)
+        //    heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.1f) // Terreno muy plano y bajo
+        //});
     }
 
     /// <summary>
@@ -180,12 +186,84 @@ public static class BiomeSystem
         );
     }
 
+    public static Dictionary<Vector2Int, BiomeData> GetNeighborBiomesWithCache(Vector2 centerPosition)
+    {
+        // Asegurarnos de que neighborBiomeCache jamás sea null
+        if (neighborBiomeCache == null)
+        {
+            lock (syncObj)
+            {
+                if (neighborBiomeCache == null)
+                {
+                    neighborBiomeCache = new Dictionary<string, Dictionary<Vector2Int, BiomeData>>();
+                }
+            }
+        }
+
+        // Construir la clave a partir de centerPosition (con un formato sin demasiada precisión)
+        string cacheKey = $"{centerPosition.x:F1}_{centerPosition.y:F1}";
+
+        // Si ya existe el entry en el caché, lo devolvemos directamente
+        lock (syncObj)
+        {
+            if (neighborBiomeCache.TryGetValue(cacheKey, out Dictionary<Vector2Int, BiomeData> cached))
+            {
+                return cached;
+            }
+        }
+
+        // Si no está en el caché, lo generamos y luego lo guardamos
+        Dictionary<Vector2Int, BiomeData> neighbors = new Dictionary<Vector2Int, BiomeData>();
+
+        Vector2Int[] offsets = {
+            new Vector2Int(-1, -1), new Vector2Int(0, -1), new Vector2Int(1, -1),
+            new Vector2Int(-1,  0), new Vector2Int(0,  0), new Vector2Int(1,  0),
+            new Vector2Int(-1,  1), new Vector2Int(0,  1), new Vector2Int(1,  1)
+        };
+
+        foreach (var offset in offsets)
+        {
+            // Para cada offset (-1..1 en X y Z), calcular posición mundial del centro del chunk vecino:
+            Vector2Int centerChunkCoord = WorldToChunkCoord(centerPosition);
+            Vector2Int neighborChunkCoord = new Vector2Int(
+                centerChunkCoord.x + offset.x,
+                centerChunkCoord.y + offset.y
+            );
+            Vector2 neighborWorldCenter = ChunkToWorldCoord(neighborChunkCoord);
+
+            // Obtener BiomeData para ese chunk vecino
+            BiomeData bd = GetBiomeData(new Vector3(neighborWorldCenter.x, 0, neighborWorldCenter.y));
+            neighbors[offset] = bd;
+        }
+
+        // Guardar en caché de forma segura
+        lock (syncObj)
+        {
+            // Verificamos de nuevo para evitar sobrescribir si otro hilo ya lo guardó
+            if (!neighborBiomeCache.ContainsKey(cacheKey))
+            {
+                neighborBiomeCache[cacheKey] = neighbors;
+            }
+        }
+
+        // Si el diccionario crece demasiado, limpiamos el más antiguo
+        lock (syncObj)
+        {
+            if (neighborBiomeCache.Count > 1000)
+            {
+                var oldestKey = neighborBiomeCache.Keys.First();
+                neighborBiomeCache.Remove(oldestKey);
+            }
+        }
+
+        return neighbors;
+    }
+
     /// <summary>
     /// Obtiene los datos de bioma para una posición en el mundo
     /// </summary>
     public static BiomeData GetBiomeData(Vector3 worldPosition)
     {
-        // Inicializar el sistema si aún no se ha hecho
         if (biomes.Count == 0)
         {
             Initialize();
@@ -193,17 +271,14 @@ public static class BiomeSystem
 
         Vector2Int chunkCoord = WorldToChunkCoord(new Vector2(worldPosition.x, worldPosition.z));
 
-        // Verificar si los datos ya están en la caché
         if (biomeDataCache.TryGetValue(chunkCoord, out BiomeData biomeData))
         {
             return biomeData;
         }
 
-        // Generar nuevos datos si no existen
-        biomeData = GenerateBiomeData(chunkCoord);
-        biomeDataCache[chunkCoord] = biomeData;
-
-        return biomeData;
+        BiomeData generated = GenerateBiomeData(chunkCoord);
+        biomeDataCache[chunkCoord] = generated;
+        return generated;
     }
 
     /// <summary>
@@ -243,18 +318,20 @@ public static class BiomeSystem
     /// </summary>
     private static BiomeData GenerateBiomeData(Vector2Int chunkCoord)
     {
-        // Centro del chunk en coordenadas del mundo
         Vector2 chunkCenter = ChunkToWorldCoord(chunkCoord);
 
-        // Generar temperatura y humedad con ruido Perlin (normalizado 0-1)
-        float temperature = Mathf.PerlinNoise(chunkCenter.x * temperatureNoiseScale, chunkCenter.y * temperatureNoiseScale);
-        float humidity = Mathf.PerlinNoise((chunkCenter.x + 1000) * humidityNoiseScale, (chunkCenter.y + 1000) * humidityNoiseScale);
+        float temperature = Mathf.PerlinNoise(
+            chunkCenter.x * temperatureNoiseScale,
+            chunkCenter.y * temperatureNoiseScale
+        );
+        float humidity = Mathf.PerlinNoise(
+            (chunkCenter.x + 1000) * humidityNoiseScale,
+            (chunkCenter.y + 1000) * humidityNoiseScale
+        );
 
-        // Determinar bioma basado en temperatura y humedad
         string biomeName = "Desconocido";
         Color biomeColor = Color.magenta;
 
-        // Primero intentamos una coincidencia exacta
         bool foundExactMatch = false;
         foreach (var biome in biomes)
         {
@@ -267,19 +344,18 @@ public static class BiomeSystem
             }
         }
 
-        // Si no hay coincidencia exacta, encontrar el bioma más cercano
         if (!foundExactMatch && biomes.Count > 0)
         {
             float closestDistance = float.MaxValue;
             BiomeDefinition closestBiome = null;
 
-            foreach (var biome in biomes)
+            foreach (var b in biomes)
             {
-                float distance = biome.GetDistanceToBiome(temperature, humidity);
-                if (distance < closestDistance)
+                float d = b.GetDistanceToBiome(temperature, humidity);
+                if (d < closestDistance)
                 {
-                    closestDistance = distance;
-                    closestBiome = biome;
+                    closestDistance = d;
+                    closestBiome = b;
                 }
             }
 
@@ -290,7 +366,6 @@ public static class BiomeSystem
             }
         }
 
-        // Crear y devolver el objeto de datos de bioma
         return new BiomeData
         {
             temperature = temperature,
@@ -299,6 +374,7 @@ public static class BiomeSystem
             biomeColor = biomeColor
         };
     }
+
 
     /// <summary>
     /// Pregenera datos de bioma para una región alrededor de una posición central
