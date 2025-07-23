@@ -60,7 +60,7 @@ public static class BiomeSystem
     /// </summary>
     private static void SetupDefaultBiomes()
     {
-        // Océano (frío y muy húmedo)
+        // Océano (frío y muy húmedo) - Azul profundo más realista
         biomes.Add(new BiomeDefinition
         {
             name = "Océano",
@@ -68,12 +68,20 @@ public static class BiomeSystem
             maxTemperature = 0.4f,
             minHumidity = 0.7f,
             maxHumidity = 1.0f,
-            biomeColor = new Color(0.0f, 0.3f, 0.8f),
-            heightMultiplier = 0.3f, // Más bajo
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.2f)
+            biomeColor = new Color(0.1f, 0.4f, 0.7f), // Azul océano más profundo
+            heightMultiplier = 0.3f,
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.2f),
+            roughness = 0.2f, // Superficie lisa del agua
+            metallic = 0.1f,
+            textureScale = 25f,
+            colorStrength = 0.8f,
+            fogColor = new Color(0.7f, 0.8f, 0.9f), // Niebla azulada
+            fogDensity = 0.02f,
+            ambientColor = new Color(0.8f, 0.9f, 1.0f),
+            ambientIntensity = 1.2f
         });
 
-        // Desierto
+        // Desierto - Tonos arena y terracota
         biomes.Add(new BiomeDefinition
         {
             name = "Desierto",
@@ -81,12 +89,20 @@ public static class BiomeSystem
             maxTemperature = 1.0f,
             minHumidity = 0.0f,
             maxHumidity = 0.2f,
-            biomeColor = new Color(0.85f, 0.8f, 0.3f),
-            heightMultiplier = 0.8f, // Altura media
-            heightCurve = AnimationCurve.Linear(0, 0, 1, 1)
+            biomeColor = new Color(0.9f, 0.7f, 0.4f), // Arena dorada
+            heightMultiplier = 0.8f,
+            heightCurve = AnimationCurve.Linear(0, 0, 1, 1),
+            roughness = 0.9f, // Arena muy rugosa
+            metallic = 0.0f,
+            textureScale = 20f,
+            colorStrength = 0.6f,
+            fogColor = new Color(1.0f, 0.9f, 0.7f), // Niebla cálida
+            fogDensity = 0.005f,
+            ambientColor = new Color(1.0f, 0.9f, 0.7f),
+            ambientIntensity = 1.4f
         });
 
-        // Montaña
+        // Montaña - Grises rocosos con toques fríos
         biomes.Add(new BiomeDefinition
         {
             name = "Montaña",
@@ -94,12 +110,20 @@ public static class BiomeSystem
             maxTemperature = 0.3f,
             minHumidity = 0.3f,
             maxHumidity = 0.7f,
-            biomeColor = new Color(0.5f, 0.5f, 0.5f),
-            heightMultiplier = 2.0f, // Mucho más alto
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 1.5f)
+            biomeColor = new Color(0.6f, 0.6f, 0.65f), // Gris piedra con toque azulado
+            heightMultiplier = 2.0f,
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 1.5f),
+            roughness = 0.95f, // Roca muy rugosa
+            metallic = 0.05f,
+            textureScale = 15f,
+            colorStrength = 0.4f,
+            fogColor = new Color(0.8f, 0.8f, 0.9f), // Niebla montañosa
+            fogDensity = 0.015f,
+            ambientColor = new Color(0.9f, 0.9f, 1.0f),
+            ambientIntensity = 0.8f
         });
 
-        // Llanura (temperatura media, humedad media-baja)
+        // Llanura - Verde hierba natural
         biomes.Add(new BiomeDefinition
         {
             name = "Llanura",
@@ -107,12 +131,20 @@ public static class BiomeSystem
             maxTemperature = 0.7f,
             minHumidity = 0.2f,
             maxHumidity = 0.5f,
-            biomeColor = new Color(0.65f, 0.8f, 0.1f), // Verde amarillento
-            heightMultiplier = 0.6f, // Altura baja-media
-            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.3f) // Terreno plano
+            biomeColor = new Color(0.5f, 0.7f, 0.3f), // Verde hierba natural
+            heightMultiplier = 0.6f,
+            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.3f),
+            roughness = 0.7f, // Hierba moderadamente rugosa
+            metallic = 0.0f,
+            textureScale = 15f,
+            colorStrength = 0.5f,
+            fogColor = new Color(0.9f, 0.95f, 0.8f), // Niebla suave verdosa
+            fogDensity = 0.008f,
+            ambientColor = new Color(0.9f, 1.0f, 0.8f),
+            ambientIntensity = 1.0f
         });
 
-        // Jungla (caliente y muy húmedo)
+        // Jungla - Verde exuberante y rico
         biomes.Add(new BiomeDefinition
         {
             name = "Jungla",
@@ -120,12 +152,20 @@ public static class BiomeSystem
             maxTemperature = 1.0f,
             minHumidity = 0.7f,
             maxHumidity = 1.0f,
-            biomeColor = new Color(0.0f, 0.6f, 0.0f), // Verde intenso
-            heightMultiplier = 0.9f, // Altura media-alta
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.8f) // Terreno ondulado
+            biomeColor = new Color(0.2f, 0.6f, 0.2f), // Verde jungla rico
+            heightMultiplier = 0.9f,
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.8f),
+            roughness = 0.8f, // Vegetación densa
+            metallic = 0.0f,
+            textureScale = 12f,
+            colorStrength = 0.7f,
+            fogColor = new Color(0.7f, 0.9f, 0.7f), // Niebla húmeda verdosa
+            fogDensity = 0.025f,
+            ambientColor = new Color(0.7f, 1.0f, 0.7f),
+            ambientIntensity = 0.9f
         });
 
-        // Bosque (temperatura media, humedad media-alta)
+        // Bosque - Verde bosque templado
         biomes.Add(new BiomeDefinition
         {
             name = "Bosque",
@@ -133,12 +173,20 @@ public static class BiomeSystem
             maxTemperature = 0.6f,
             minHumidity = 0.5f,
             maxHumidity = 0.8f,
-            biomeColor = new Color(0.2f, 0.5f, 0.2f), // Verde oscuro
-            heightMultiplier = 0.7f, // Altura media
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.6f) // Colinas suaves
+            biomeColor = new Color(0.3f, 0.5f, 0.3f), // Verde bosque templado
+            heightMultiplier = 0.7f,
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.6f),
+            roughness = 0.75f, // Suelo de bosque
+            metallic = 0.0f,
+            textureScale = 15f,
+            colorStrength = 0.5f,
+            fogColor = new Color(0.8f, 0.9f, 0.8f), // Niebla bosque
+            fogDensity = 0.012f,
+            ambientColor = new Color(0.8f, 1.0f, 0.8f),
+            ambientIntensity = 0.9f
         });
 
-        // Tundra (frío y seco)
+        // Tundra - Blancos y grises fríos
         biomes.Add(new BiomeDefinition
         {
             name = "Tundra",
@@ -146,12 +194,20 @@ public static class BiomeSystem
             maxTemperature = 0.3f,
             minHumidity = 0.0f,
             maxHumidity = 0.3f,
-            biomeColor = new Color(0.8f, 0.8f, 0.8f), // Blanco grisáceo
-            heightMultiplier = 0.5f, // Altura baja
-            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.4f) // Terreno relativamente plano
+            biomeColor = new Color(0.85f, 0.9f, 0.95f), // Blanco nieve con toque azul
+            heightMultiplier = 0.5f,
+            heightCurve = AnimationCurve.Linear(0, 0, 1, 0.4f),
+            roughness = 0.3f, // Nieve lisa
+            metallic = 0.0f,
+            textureScale = 18f,
+            colorStrength = 0.7f,
+            fogColor = new Color(0.9f, 0.9f, 1.0f), // Niebla fría
+            fogDensity = 0.018f,
+            ambientColor = new Color(0.9f, 0.9f, 1.0f),
+            ambientIntensity = 1.1f
         });
 
-        // Pantano (temperatura media, muy húmedo)
+        // Pantano - Verde pantanoso oscuro
         biomes.Add(new BiomeDefinition
         {
             name = "Pantano",
@@ -159,9 +215,17 @@ public static class BiomeSystem
             maxTemperature = 0.7f,
             minHumidity = 0.8f,
             maxHumidity = 1.0f,
-            biomeColor = new Color(0.4f, 0.5f, 0.3f), // Verde parduzco
-            heightMultiplier = 0.4f, // Altura muy baja (pantanos suelen ser bajos)
-            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.1f) // Terreno muy plano y bajo
+            biomeColor = new Color(0.4f, 0.5f, 0.35f), // Verde pantano oscuro
+            heightMultiplier = 0.4f,
+            heightCurve = AnimationCurve.EaseInOut(0, 0, 1, 0.1f),
+            roughness = 0.9f, // Barro rugoso
+            metallic = 0.0f,
+            textureScale = 12f,
+            colorStrength = 0.6f,
+            fogColor = new Color(0.7f, 0.8f, 0.6f), // Niebla pantanosa
+            fogDensity = 0.03f,
+            ambientColor = new Color(0.8f, 0.9f, 0.7f),
+            ambientIntensity = 0.7f
         });
     }
 

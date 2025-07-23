@@ -29,8 +29,22 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
         _BaseTextureScales ("Base Texture Scales", Vector) = (1, 1, 1, 1)
         _BaseTextureScales1 ("Base Texture Scales 1", Vector) = (1, 1, 1, 1)
         
+        [Header(Biome Colors)]
+        _BiomeColors0 ("Biome Color 0", Vector) = (1, 1, 1, 1)
+        _BiomeColors1 ("Biome Color 1", Vector) = (1, 1, 1, 1)
+        _BiomeColors2 ("Biome Color 2", Vector) = (1, 1, 1, 1)
+        _BiomeColors3 ("Biome Color 3", Vector) = (1, 1, 1, 1)
+        _BiomeColors4 ("Biome Color 4", Vector) = (1, 1, 1, 1)
+        _BiomeColors5 ("Biome Color 5", Vector) = (1, 1, 1, 1)
+        _BiomeColors6 ("Biome Color 6", Vector) = (1, 1, 1, 1)
+        _BiomeColors7 ("Biome Color 7", Vector) = (1, 1, 1, 1)
+        
         [Header(Textures)]
         [NoScaleOffset] _BaseTextureArray ("Base Texture Array", 2DArray) = "white" {}
+        
+        [Header(Biome Blending)]
+        _BiomeColorStrength ("Biome Color Strength", Range(0, 1)) = 0.5
+        _TextureStrength ("Texture Strength", Range(0, 1)) = 0.5
     }
     
     SubShader
@@ -88,6 +102,16 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 float4 _BaseColorStrength1;
                 float4 _BaseTextureScales;
                 float4 _BaseTextureScales1;
+                float4 _BiomeColors0;
+                float4 _BiomeColors1;
+                float4 _BiomeColors2;
+                float4 _BiomeColors3;
+                float4 _BiomeColors4;
+                float4 _BiomeColors5;
+                float4 _BiomeColors6;
+                float4 _BiomeColors7;
+                float _BiomeColorStrength;
+                float _TextureStrength;
             CBUFFER_END
             
             float InverseLerp(float a, float b, float value)
@@ -137,14 +161,22 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
             half4 frag(Varyings input) : SV_Target
             {
                 // Preparar variables
-                float heightPercent = InverseLerp(_MinHeight, _MaxHeight, input.positionWS.y);
                 float3 blendAxes = abs(input.normalWS);
                 blendAxes /= blendAxes.x + blendAxes.y + blendAxes.z;
                 
-                // Construir arrays desde los vectores
-                float baseTextureScales[8];
+                // Array de colores de bioma
+                float4 biomeColors[8];
+                biomeColors[0] = _BiomeColors0;
+                biomeColors[1] = _BiomeColors1;
+                biomeColors[2] = _BiomeColors2;
+                biomeColors[3] = _BiomeColors3;
+                biomeColors[4] = _BiomeColors4;
+                biomeColors[5] = _BiomeColors5;
+                biomeColors[6] = _BiomeColors6;
+                biomeColors[7] = _BiomeColors7;
                 
-                // Llenar los arrays
+                // Construir array de escalas de textura
+                float baseTextureScales[8];
                 baseTextureScales[0] = _BaseTextureScales.x;
                 baseTextureScales[1] = _BaseTextureScales.y;
                 baseTextureScales[2] = _BaseTextureScales.z;
@@ -155,21 +187,37 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 baseTextureScales[7] = _BaseTextureScales1.w;
 
                 // Calcular el color final basado en el blending de biomas
-                float3 albedo = float3(0,0,0);
+                float3 finalColor = float3(0,0,0);
+                float3 finalTexture = float3(0,0,0);
                 
                 for(int i = 0; i < 4; i++)
                 {
-                    float scale = baseTextureScales[(int)input.biomeIndexes[i]];
-                    float3 textureColor = TriplanarMapping(
-                        input.positionWS, 
-                        scale, 
-                        blendAxes, 
-                        (int)input.biomeIndexes[i]
-                    );
-                    albedo += textureColor * input.biomeStrengths[i];
+                    int biomeIndex = (int)input.biomeIndexes[i];
+                    float strength = input.biomeStrengths[i];
+                    
+                    if(strength > 0.001 && biomeIndex < 8)
+                    {
+                        // Obtener color del bioma
+                        float3 biomeColor = biomeColors[biomeIndex].rgb;
+                        
+                        // Obtener textura con triplanar mapping
+                        float scale = baseTextureScales[biomeIndex];
+                        float3 textureColor = TriplanarMapping(
+                            input.positionWS, 
+                            scale, 
+                            blendAxes, 
+                            biomeIndex
+                        );
+                        
+                        // Mezclar color de bioma con textura
+                        float3 blendedColor = lerp(textureColor, biomeColor * textureColor, _BiomeColorStrength);
+                        blendedColor = lerp(biomeColor, blendedColor, _TextureStrength);
+                        
+                        finalColor += blendedColor * strength;
+                    }
                 }
                 
-                // Aplicar iluminacin bsica
+                // Aplicar iluminación básica
                 InputData lightingInput = (InputData)0;
                 lightingInput.positionWS = input.positionWS;
                 lightingInput.normalWS = normalize(input.normalWS);
@@ -177,7 +225,7 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 lightingInput.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 
                 SurfaceData surfaceData = (SurfaceData)0;
-                surfaceData.albedo = albedo;
+                surfaceData.albedo = finalColor;
                 surfaceData.metallic = 0;
                 surfaceData.smoothness = 0.5;
                 

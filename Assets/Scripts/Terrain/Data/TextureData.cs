@@ -67,8 +67,41 @@ public class TextureData : UpdatableData {
         Texture2DArray texturesArray = GenerateTextureArray(layers.Select(x => x.texture).ToArray());
         material.SetTexture("_BaseTextureArray", texturesArray);
 
+        // Aplicar colores de bioma al material
+        ApplyBiomeColorsToMaterial(material);
+
         // Actualizar alturas del mesh
         UpdateMeshHeights(material, savedMinHeight, savedMaxHeight);
+    }
+
+    public void ApplyBiomeColorsToMaterial(Material material)
+    {
+        var allBiomes = BiomeSystem.GetAllBiomes();
+        
+        // Crear arrays de colores de bioma
+        Color[] biomeColors = new Color[8];
+        
+        for (int i = 0; i < 8; i++)
+        {
+            if (i < allBiomes.Count)
+            {
+                biomeColors[i] = allBiomes[i].biomeColor;
+            }
+            else
+            {
+                biomeColors[i] = Color.white; // Color por defecto
+            }
+        }
+        
+        // Aplicar colores al material como vectores
+        material.SetVector("_BiomeColors0", new Vector4(biomeColors[0].r, biomeColors[0].g, biomeColors[0].b, biomeColors[0].a));
+        material.SetVector("_BiomeColors1", new Vector4(biomeColors[1].r, biomeColors[1].g, biomeColors[1].b, biomeColors[1].a));
+        material.SetVector("_BiomeColors2", new Vector4(biomeColors[2].r, biomeColors[2].g, biomeColors[2].b, biomeColors[2].a));
+        material.SetVector("_BiomeColors3", new Vector4(biomeColors[3].r, biomeColors[3].g, biomeColors[3].b, biomeColors[3].a));
+        material.SetVector("_BiomeColors4", new Vector4(biomeColors[4].r, biomeColors[4].g, biomeColors[4].b, biomeColors[4].a));
+        material.SetVector("_BiomeColors5", new Vector4(biomeColors[5].r, biomeColors[5].g, biomeColors[5].b, biomeColors[5].a));
+        material.SetVector("_BiomeColors6", new Vector4(biomeColors[6].r, biomeColors[6].g, biomeColors[6].b, biomeColors[6].a));
+        material.SetVector("_BiomeColors7", new Vector4(biomeColors[7].r, biomeColors[7].g, biomeColors[7].b, biomeColors[7].a));
     }
 
     public int GetBiomeTextureIndex(string biomeName)
