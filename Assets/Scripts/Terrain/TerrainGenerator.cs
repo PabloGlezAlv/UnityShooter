@@ -37,6 +37,9 @@ public class TerrainGenerator : MonoBehaviour
         // Inicializar y configurar el sistema de biomas
         BiomeSystem.Initialize();
         BiomeSystem.ConfigureNoiseSettings(temperatureNoiseScale, humidityNoiseScale);
+        
+        // Sincronizar el tamaño de chunk del BiomeSystem con el meshWorldSize real
+        BiomeSystem.chunkSize = meshSettings.meshWorldSize;
 
         textureSettings.ApplyToMaterial(mapMaterial);
         textureSettings.UpdateMeshHeights(mapMaterial, heightMapSettings.minHeight, heightMapSettings.maxHeight);

@@ -1,10 +1,11 @@
 using UnityEngine;
+using System.Linq;
 
 public class PlayerBiomeInfo : MonoBehaviour
 {
     private Transform player;
     private BiomeSystem.BiomeData biomeInfo;
-    private float checkInterval = 0.5f; // Intervalo para actualizar la información de bioma
+    private float checkInterval = 0.5f; // Intervalo para actualizar la informaciï¿½n de bioma
     private float timeSinceLastCheck = 0f;
     private float gizmoSize = 1f;
 
@@ -26,23 +27,37 @@ public class PlayerBiomeInfo : MonoBehaviour
 
     private void UpdateBiomeInfo()
     {
-        // Obtener información de bioma para la posición actual del jugador
+        // Obtener informaciï¿½n de bioma para la posiciï¿½n actual del jugador
         biomeInfo = BiomeSystem.GetBiomeData(player.position);
     }
 
     private void OnDrawGizmos()
     {
-        if (biomeInfo.biomeName == null)
+        if (biomeInfo.influences == null || biomeInfo.influences.Count == 0)
             return;
 
 #if UNITY_EDITOR
-        // Dibuja un cubo para marcar la posición del jugador
-        Gizmos.color = biomeInfo.biomeColor;
-        Gizmos.DrawWireCube(player.position, Vector3.one * gizmoSize);
+        var mainBiomeInfluence = biomeInfo.influences.OrderByDescending(i => i.influence).First();
+        var mainBiome = BiomeSystem.GetAllBiomes().Find(b => b.name == mainBiomeInfluence.biomeName);
 
-        // Mostrar la información del bioma encima del jugador
-        UnityEditor.Handles.Label(player.position + Vector3.up * gizmoSize * 2.5f,
-            $"Player Biome:\nTemp: {biomeInfo.temperature:F2}\nHumidity: {biomeInfo.humidity:F2}\nBioma: {biomeInfo.biomeName}");
+        if (mainBiome != null)
+        {
+            // Dibuja un cubo para marcar la posicin del jugador
+            Gizmos.color = mainBiome.biomeColor;
+            Gizmos.DrawWireCube(player.position, Vector3.one * gizmoSize);
+
+            // Construir el texto de la etiqueta
+            string labelText = $"Player Biome: {mainBiome.name} ({(mainBiomeInfluence.influence * 100):F1}%)\n";
+            labelText += $"Temp: {biomeInfo.temperature:F2}, Hum: {biomeInfo.humidity:F2}\n";
+            labelText += "Influences:\n";
+            foreach (var influence in biomeInfo.influences.OrderByDescending(i => i.influence))
+            {
+                labelText += $"- {influence.biomeName}: {(influence.influence * 100):F1}%\n";
+            }
+
+            // Mostrar la informacin del bioma encima del jugador
+            UnityEditor.Handles.Label(player.position + Vector3.up * gizmoSize * 2.5f, labelText);
+        }
 #endif
     }
 }

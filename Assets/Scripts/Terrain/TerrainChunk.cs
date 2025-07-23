@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Linq;
 
 public class TerrainChunk
 {
@@ -110,43 +111,44 @@ public class TerrainChunk
             lodMeshes[i].mesh = null;
         }
 
-        // Solicitar nuevo heightmap con datos de bioma
+        Vector2 worldCenter = new Vector2(meshObject.transform.position.x, meshObject.transform.position.z);
+        // Solicitar nuevo heightmap
         ThreadedDataRequester.RequestData(() =>
             HeightMapGenerator.GenerateHeightMap(
                 MeshSettings.numVertsPerLine,
                 MeshSettings.numVertsPerLine,
                 heightMapSettings,
                 sampleCentre,
-                biomeData),
+                worldCenter,
+                MeshSettings.meshWorldSize
+            ),
             OnHeightMapReceived);
     }
     private void LoadBiomeData(Vector3 position)
     {
-        BiomeSystem.BiomeData newBiomeData = BiomeSystem.GetBiomeData(position);
+        biomeData = BiomeSystem.GetBiomeData(position);
+        biomeDataReceived = true;
 
-        // Si el bioma cambió, regenerar el heightmap
-        if (!biomeDataReceived || newBiomeData.biomeName != biomeData.biomeName)
+        if (heightMapReceived)
         {
-            biomeData = newBiomeData;
-            biomeDataReceived = true;
-
-            if (heightMapReceived)
-            {
-                RegenerateWithNewBiome();
-            }
+            // Opcional: Podras forzar una regeneracin si el bioma principal cambia drsticamente
+            // pero con el blending vrtice a vrtice, esto puede no ser necesario.
+            // Por ahora, solo actualizamos los datos.
+            ApplyBiomeMaterial();
         }
     }
 
     public void Load()
     {
-        // CAMBIO: Pasar datos de bioma al generador
+        Vector2 worldCenter = new Vector2(meshObject.transform.position.x, meshObject.transform.position.z);
         ThreadedDataRequester.RequestData(() =>
             HeightMapGenerator.GenerateHeightMap(
                 MeshSettings.numVertsPerLine,
                 MeshSettings.numVertsPerLine,
                 heightMapSettings,
                 sampleCentre,
-                biomeData 
+                worldCenter,
+                MeshSettings.meshWorldSize
             ),
             OnHeightMapReceived
         );
@@ -169,20 +171,20 @@ public class TerrainChunk
 
     private void ApplyBiomeMaterial()
     {
-        if (biomeDataReceived && !string.IsNullOrEmpty(biomeData.biomeName))
+        if (biomeDataReceived && biomeData.influences != null && biomeData.influences.Count > 0)
         {
-            var biomes = BiomeSystem.GetAllBiomes();
-            var currentBiome = biomes.Find(b => b.name == biomeData.biomeName);
+            var mainBiomeInfluence = biomeData.influences.OrderByDescending(i => i.influence).First();
+            var mainBiome = BiomeSystem.GetAllBiomes().Find(b => b.name == mainBiomeInfluence.biomeName);
 
-            if (currentBiome != null && currentBiome.terrainMaterial != null)
+            if (mainBiome != null && mainBiome.terrainMaterial != null)
             {
-                meshRenderer.material = currentBiome.terrainMaterial;
+                meshRenderer.material = mainBiome.terrainMaterial;
             }
-            else
+            else if (mainBiome != null)
             {
                 // Crear material temporal con color del bioma
                 Material tempMaterial = new Material(meshRenderer.material);
-                tempMaterial.color = biomeData.biomeColor;
+                tempMaterial.color = mainBiome.biomeColor;
                 meshRenderer.material = tempMaterial;
             }
         }
@@ -310,10 +312,15 @@ public class TerrainChunkBiomeDebug : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (chunk == null || !chunk.IsVisible())
+        if (chunk == null || !chunk.IsVisible() || chunk.biomeData.influences == null || chunk.biomeData.influences.Count == 0)
             return;
 #if UNITY_EDITOR
-        // Obtener tamaño y posición del chunk
+        var mainBiomeInfluence = chunk.biomeData.influences.OrderByDescending(i => i.influence).First();
+        var mainBiome = BiomeSystem.GetAllBiomes().Find(b => b.name == mainBiomeInfluence.biomeName);
+
+        if (mainBiome == null) return;
+
+        // Obtener tamao y posicin del chunk
         float meshWorldSize = chunk.MeshSettings.meshWorldSize;
         Vector3 chunkPosition = chunk.GetWorldPosition();
 
@@ -329,7 +336,7 @@ public class TerrainChunkBiomeDebug : MonoBehaviour
         corners[3] = center + new Vector3(-halfSize.x, 0, halfSize.z); // Esquina superior izquierda
 
         // Dibujar contorno del chunk
-        UnityEditor.Handles.color = chunk.biomeData.biomeColor;
+        UnityEditor.Handles.color = mainBiome.biomeColor;
         for (int i = 0; i < 4; i++)
         {
             UnityEditor.Handles.DrawLine(corners[i], corners[(i + 1) % 4]);
@@ -346,11 +353,11 @@ public class TerrainChunkBiomeDebug : MonoBehaviour
             center + Vector3.forward * crossSize
         );
 
-        // Etiqueta con información del bioma EN EL CENTRO
+        // Etiqueta con informacin del bioma EN EL CENTRO
         string biomeInfo = $"Chunk {chunk.coord}\n" +
                           $"Temp: {chunk.biomeData.temperature:F2}\n" +
                           $"Humidity: {chunk.biomeData.humidity:F2}\n" +
-                          $"Bioma: {chunk.biomeData.biomeName}";
+                          $"Biome: {mainBiome.name}";
 
         // Posicionar el label exactamente en el centro del chunk
         Vector3 labelPosition = center + Vector3.up * (meshWorldSize * 0.1f);

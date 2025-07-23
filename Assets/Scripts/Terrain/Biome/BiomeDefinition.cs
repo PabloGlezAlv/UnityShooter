@@ -2,6 +2,14 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
+[System.Serializable]
+public class BiomeFoliage
+{
+    public GameObject prefab;
+    [Range(0, 1)]
+    public float density;
+}
+
 // Define la estructura de un bioma
 [System.Serializable]
 public class BiomeDefinition
@@ -16,10 +24,18 @@ public class BiomeDefinition
     [Header("Terrain Properties")]
     public float heightMultiplier = 1f;        // Multiplicador de altura
     public AnimationCurve heightCurve = AnimationCurve.Linear(0, 0, 1, 1); // Curva de altura del bioma
-    public Material terrainMaterial;           // Material específico del bioma
-    public float noiseScale = 1f;              // Escala del ruido específica del bioma
+    public Material terrainMaterial;           // Material especï¿½fico del bioma
+    public float noiseScale = 1f;              // Escala del ruido especï¿½fica del bioma
 
-    // Método para comprobar si unas condiciones climáticas pertenecen a este bioma
+    [Header("Foliage")]
+    public List<BiomeFoliage> foliage;
+
+    [Header("Atmospherics")]
+    public Color fogColor = Color.gray;
+    public float fogDensity = 0.01f;
+
+
+    // Mtodo para comprobar si unas condiciones climticas pertenecen a este bioma
     public bool MatchesConditions(float temperature, float humidity)
     {
         return temperature >= minTemperature && temperature <= maxTemperature &&

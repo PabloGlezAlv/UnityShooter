@@ -4,6 +4,7 @@ using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+using System.Linq; // Added for .OrderByDescending()
 
 public class MapPreview : MonoBehaviour
 {
@@ -22,23 +23,12 @@ public class MapPreview : MonoBehaviour
     [Range(0, MeshSettings.numSupportedLODs - 1)]
     public int editorPreviewLOD;
 
-    [Header("Biome Settings")]
-    [Tooltip("Selected biome for preview mode")]
-    public string selectedBiomeName;
-    [Tooltip("Override mesh color with biome color in preview")]
-    public bool useBiomeColor = true;
-    [Tooltip("Show biome temperature and humidity noise")]
-    public bool showClimateData = false;
-
-    private List<string> availableBiomes = new List<string>();
-    private BiomeDefinition selectedBiome;
-
     public bool autoUpdate;
 
     private void OnEnable()
     {
-        InitializeBiomeSystem();
-        RefreshBiomeList();
+        // InitializeBiomeSystem(); // Removed as per new_code
+        // RefreshBiomeList(); // Removed as per new_code
     }
 
     private void InitializeBiomeSystem()
@@ -59,54 +49,54 @@ public class MapPreview : MonoBehaviour
 
     private void RefreshBiomeList()
     {
-        availableBiomes.Clear();
+        // availableBiomes.Clear(); // Removed as per new_code
 
-        var allBiomes = BiomeSystem.GetAllBiomes();
+        // var allBiomes = BiomeSystem.GetAllBiomes(); // Removed as per new_code
 
-        if (allBiomes.Count == 0)
-        {
-            Debug.LogError("No se encontraron biomas. Verificar que BiomeSystem.Initialize() funcione correctamente.");
-            return;
-        }
+        // if (allBiomes.Count == 0) // Removed as per new_code
+        // { // Removed as per new_code
+        //     Debug.LogError("No se encontraron biomas. Verificar que BiomeSystem.Initialize() funcione correctamente."); // Removed as per new_code
+        //     return; // Removed as per new_code
+        // } // Removed as per new_code
 
-        foreach (var biome in allBiomes)
-        {
-            if (biome != null && !string.IsNullOrEmpty(biome.name))
-            {
-                availableBiomes.Add(biome.name);
-            }
-        }
+        // foreach (var biome in allBiomes) // Removed as per new_code
+        // { // Removed as per new_code
+        //     if (biome != null && !string.IsNullOrEmpty(biome.name)) // Removed as per new_code
+        //     { // Removed as per new_code
+        //         availableBiomes.Add(biome.name); // Removed as per new_code
+        //     } // Removed as per new_code
+        // } // Removed as per new_code
 
-        // Seleccionar el primer bioma por defecto si no hay ninguno seleccionado
-        if (string.IsNullOrEmpty(selectedBiomeName) && availableBiomes.Count > 0)
-        {
-            selectedBiomeName = availableBiomes[0];
-        }
+        // // Seleccionar el primer bioma por defecto si no hay ninguno seleccionado // Removed as per new_code
+        // if (string.IsNullOrEmpty(selectedBiomeName) && availableBiomes.Count > 0) // Removed as per new_code
+        // { // Removed as per new_code
+        //     selectedBiomeName = availableBiomes[0]; // Removed as per new_code
+        // } // Removed as per new_code
 
-        // Buscar el bioma seleccionado
-        UpdateSelectedBiome();
+        // // Buscar el bioma seleccionado // Removed as per new_code
+        // UpdateSelectedBiome(); // Removed as per new_code
     }
 
     private void UpdateSelectedBiome()
     {
-        if (string.IsNullOrEmpty(selectedBiomeName)) return;
+        // if (string.IsNullOrEmpty(selectedBiomeName)) return; // Removed as per new_code
 
-        selectedBiome = null;
-        foreach (var biome in BiomeSystem.GetAllBiomes())
-        {
-            if (biome != null && biome.name == selectedBiomeName)
-            {
-                selectedBiome = biome;
-                return;
-            }
-        }
+        // selectedBiome = null; // Removed as per new_code
+        // foreach (var biome in BiomeSystem.GetAllBiomes()) // Removed as per new_code
+        // { // Removed as per new_code
+        //     if (biome != null && biome.name == selectedBiomeName) // Removed as per new_code
+        //     { // Removed as per new_code
+        //         selectedBiome = biome; // Removed as per new_code
+        //         return; // Removed as per new_code
+        //     } // Removed as per new_code
+        // } // Removed as per new_code
 
-        // Si no se encontró el bioma, seleccionar el primero disponible
-        if (selectedBiome == null && availableBiomes.Count > 0)
-        {
-            selectedBiomeName = availableBiomes[0];
-            UpdateSelectedBiome();
-        }
+        // // Si no se encontró el bioma, seleccionar el primero disponible // Removed as per new_code
+        // if (selectedBiome == null && availableBiomes.Count > 0) // Removed as per new_code
+        // { // Removed as per new_code
+        //     selectedBiomeName = availableBiomes[0]; // Removed as per new_code
+        //     UpdateSelectedBiome(); // Removed as per new_code
+        // } // Removed as per new_code
     }
 
     public void DrawMapInEditor()
@@ -115,30 +105,7 @@ public class MapPreview : MonoBehaviour
         textureData.ApplyToMaterial(terrainMaterial);
         textureData.UpdateMeshHeights(terrainMaterial, heightMapSettings.minHeight, heightMapSettings.maxHeight);
 
-        // OBTENER DATOS DE BIOMA PARA LA GENERACIÓN
-        BiomeSystem.BiomeData biomeData = default;
-        if (!string.IsNullOrEmpty(selectedBiomeName))
-        {
-            UpdateSelectedBiome();
-            if (selectedBiome != null)
-            {
-                biomeData = new BiomeSystem.BiomeData
-                {
-                    biomeName = selectedBiome.name,
-                    biomeColor = selectedBiome.biomeColor,
-                    temperature = (selectedBiome.minTemperature + selectedBiome.maxTemperature) / 2f,
-                    humidity = (selectedBiome.minHumidity + selectedBiome.maxHumidity) / 2f
-                };
-            }
-        }
-
-        // GENERAR HEIGHTMAP CON BIOMA
-        HeightMap heightMap = HeightMapGenerator.GenerateHeightMap(
-            meshSettings.numVertsPerLine,
-            meshSettings.numVertsPerLine,
-            heightMapSettings,
-            Vector2.zero,
-            biomeData);
+        HeightMap heightMap = HeightMapGenerator.GenerateHeightMap(meshSettings.numVertsPerLine, meshSettings.numVertsPerLine, heightMapSettings, Vector2.zero, Vector2.zero, meshSettings.meshWorldSize);
 
         if (drawMode == DrawMode.NoiseMap)
         {
@@ -154,7 +121,7 @@ public class MapPreview : MonoBehaviour
         }
         else if (drawMode == DrawMode.BiomeMesh)
         {
-            DrawBiomeMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, editorPreviewLOD));
+            DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, editorPreviewLOD));
         }
         else if (drawMode == DrawMode.BiomeMap)
         {
@@ -180,25 +147,10 @@ public class MapPreview : MonoBehaviour
 
     public void DrawBiomeMesh(MeshData meshData)
     {
-        // Actualizar el bioma seleccionado por si cambió
-        UpdateSelectedBiome();
-
         meshFilter.sharedMesh = meshData.CreateMesh();
         textureRender.gameObject.SetActive(false);
         meshFilter.gameObject.SetActive(true);
-
-        // Aplicar color del bioma si está habilitado
-        if (useBiomeColor && selectedBiome != null)
-        {
-            // Crear una copia del material para no modificar el original
-            Material biomeMaterial = new Material(terrainMaterial);
-            biomeMaterial.color = selectedBiome.biomeColor;
-            meshRenderer.sharedMaterial = biomeMaterial;
-        }
-        else
-        {
-            meshRenderer.sharedMaterial = terrainMaterial;
-        }
+        meshRenderer.sharedMaterial = terrainMaterial;
     }
 
     public void DrawBiomeTexture()
@@ -226,9 +178,21 @@ public class MapPreview : MonoBehaviour
                     (y - resolution / 2) * scale
                 );
 
-                // Obtener datos de bioma para esta posición
+                // Obtener datos de bioma para esta posicin
                 var biomeData = BiomeSystem.GetBiomeData(worldPos);
-                pixels[y * resolution + x] = biomeData.biomeColor;
+                if (biomeData.influences != null && biomeData.influences.Count > 0)
+                {
+                    var mainBiome = biomeData.influences.OrderByDescending(i => i.influence).First();
+                    var biomeDef = BiomeSystem.GetAllBiomes().Find(b => b.name == mainBiome.biomeName);
+                    if (biomeDef != null)
+                    {
+                        pixels[y * resolution + x] = biomeDef.biomeColor;
+                    }
+                }
+                else
+                {
+                    pixels[y * resolution + x] = Color.black;
+                }
             }
         }
 
@@ -274,35 +238,29 @@ public class MapPreview : MonoBehaviour
             textureData.OnValuesUpdated -= OnTextureValuesUpdated;
             textureData.OnValuesUpdated += OnTextureValuesUpdated;
         }
-
-        // Actualizar el bioma seleccionado si cambió
-        if (selectedBiome == null || selectedBiome.name != selectedBiomeName)
-        {
-            UpdateSelectedBiome();
-        }
     }
 
 #if UNITY_EDITOR
     // Mostrar información del bioma en el editor
     private void OnDrawGizmos()
     {
-        if ((drawMode != DrawMode.BiomeMesh && drawMode != DrawMode.BiomeMap) ||
-            selectedBiome == null ||
-            !meshFilter.gameObject.activeSelf)
-            return;
+        // if ((drawMode != DrawMode.BiomeMesh && drawMode != DrawMode.BiomeMap) || // Removed as per new_code
+        //     selectedBiome == null || // Removed as per new_code
+        //     !meshFilter.gameObject.activeSelf) // Removed as per new_code
+        //     return; // Removed as per new_code
 
-        Vector3 meshPosition = meshFilter.transform.position;
-        Vector3 labelPosition = meshPosition + Vector3.up * 2f;
+        // Vector3 meshPosition = meshFilter.transform.position; // Removed as per new_code
+        // Vector3 labelPosition = meshPosition + Vector3.up * 2f; // Removed as per new_code
 
-        Handles.color = selectedBiome.biomeColor;
-        Handles.DrawWireCube(meshPosition, new Vector3(1, 0.1f, 1));
+        // Handles.color = selectedBiome.biomeColor; // Removed as per new_code
+        // Handles.DrawWireCube(meshPosition, new Vector3(1, 0.1f, 1)); // Removed as per new_code
 
-        string biomeInfo = $"Bioma: {selectedBiome.name}\n" +
-                           $"Color: {ColorUtility.ToHtmlStringRGB(selectedBiome.biomeColor)}\n" +
-                           $"Temp: {selectedBiome.minTemperature:F2}-{selectedBiome.maxTemperature:F2}\n" +
-                           $"Humid: {selectedBiome.minHumidity:F2}-{selectedBiome.maxHumidity:F2}";
+        // string biomeInfo = $"Bioma: {selectedBiome.name}\n" + // Removed as per new_code
+        //                    $"Color: {ColorUtility.ToHtmlStringRGB(selectedBiome.biomeColor)}\n" + // Removed as per new_code
+        //                    $"Temp: {selectedBiome.minTemperature:F2}-{selectedBiome.maxTemperature:F2}\n" + // Removed as per new_code
+        //                    $"Humid: {selectedBiome.minHumidity:F2}-{selectedBiome.maxHumidity:F2}"; // Removed as per new_code
 
-        Handles.Label(labelPosition, biomeInfo);
+        // Handles.Label(labelPosition, biomeInfo); // Removed as per new_code
     }
 
     // Editor personalizado para mostrar un dropdown de biomas
@@ -329,43 +287,43 @@ public class MapPreview : MonoBehaviour
             }
 
             // Mostrar información de debug
-            EditorGUILayout.LabelField($"Available Biomes: {mapPreview.availableBiomes.Count}");
+            // EditorGUILayout.LabelField($"Available Biomes: {mapPreview.availableBiomes.Count}"); // Removed as per new_code
 
-            // Mostrar dropdown de biomas disponibles solo si tenemos biomas
-            if (mapPreview.availableBiomes.Count > 0)
-            {
-                int currentIndex = mapPreview.availableBiomes.IndexOf(mapPreview.selectedBiomeName);
-                if (currentIndex < 0) currentIndex = 0;
+            // Mostrar dropdown de biomas disponibles solo si tenemos biomas // Removed as per new_code
+            // if (mapPreview.availableBiomes.Count > 0) // Removed as per new_code
+            // { // Removed as per new_code
+            //     int currentIndex = mapPreview.availableBiomes.IndexOf(mapPreview.selectedBiomeName); // Removed as per new_code
+            //     if (currentIndex < 0) currentIndex = 0; // Removed as per new_code
 
-                int newIndex = EditorGUILayout.Popup("Select Biome", currentIndex, mapPreview.availableBiomes.ToArray());
+            //     int newIndex = EditorGUILayout.Popup("Select Biome", currentIndex, mapPreview.availableBiomes.ToArray()); // Removed as per new_code
 
-                if (newIndex != currentIndex && newIndex >= 0 && newIndex < mapPreview.availableBiomes.Count)
-                {
-                    Undo.RecordObject(mapPreview, "Change Selected Biome");
-                    mapPreview.selectedBiomeName = mapPreview.availableBiomes[newIndex];
-                    mapPreview.UpdateSelectedBiome();
+            //     if (newIndex != currentIndex && newIndex >= 0 && newIndex < mapPreview.availableBiomes.Count) // Removed as per new_code
+            //     { // Removed as per new_code
+            //         Undo.RecordObject(mapPreview, "Change Selected Biome"); // Removed as per new_code
+            //         mapPreview.selectedBiomeName = mapPreview.availableBiomes[newIndex]; // Removed as per new_code
+            //         mapPreview.UpdateSelectedBiome(); // Removed as per new_code
 
-                    if (mapPreview.autoUpdate)
-                    {
-                        mapPreview.DrawMapInEditor();
-                    }
-                }
+            //         if (mapPreview.autoUpdate) // Removed as per new_code
+            //         { // Removed as per new_code
+            //             mapPreview.DrawMapInEditor(); // Removed as per new_code
+            //         } // Removed as per new_code
+            //     } // Removed as per new_code
 
-                // Mostrar información del bioma seleccionado
-                if (mapPreview.selectedBiome != null)
-                {
-                    EditorGUILayout.Space();
-                    EditorGUILayout.LabelField("Selected Biome Info:", EditorStyles.boldLabel);
-                    EditorGUILayout.LabelField($"Name: {mapPreview.selectedBiome.name}");
-                    EditorGUILayout.ColorField("Color", mapPreview.selectedBiome.biomeColor);
-                    EditorGUILayout.LabelField($"Temperature: {mapPreview.selectedBiome.minTemperature:F2} - {mapPreview.selectedBiome.maxTemperature:F2}");
-                    EditorGUILayout.LabelField($"Humidity: {mapPreview.selectedBiome.minHumidity:F2} - {mapPreview.selectedBiome.maxHumidity:F2}");
-                }
-            }
-            else
-            {
-                EditorGUILayout.HelpBox("No biomes available. Click 'Reinitialize Biome System' to try again.", MessageType.Warning);
-            }
+            //     // Mostrar información del bioma seleccionado // Removed as per new_code
+            //     if (mapPreview.selectedBiome != null) // Removed as per new_code
+            //     { // Removed as per new_code
+            //         EditorGUILayout.Space(); // Removed as per new_code
+            //         EditorGUILayout.LabelField("Selected Biome Info:", EditorStyles.boldLabel); // Removed as per new_code
+            //         EditorGUILayout.LabelField($"Name: {mapPreview.selectedBiome.name}"); // Removed as per new_code
+            //         EditorGUILayout.ColorField("Color", mapPreview.selectedBiome.biomeColor); // Removed as per new_code
+            //         EditorGUILayout.LabelField($"Temperature: {mapPreview.selectedBiome.minTemperature:F2} - {mapPreview.selectedBiome.maxTemperature:F2}"); // Removed as per new_code
+            //         EditorGUILayout.LabelField($"Humidity: {mapPreview.selectedBiome.minHumidity:F2} - {mapPreview.selectedBiome.maxHumidity:F2}"); // Removed as per new_code
+            //     } // Removed as per new_code
+            // } // Removed as per new_code
+            // else // Removed as per new_code
+            // { // Removed as per new_code
+            //     EditorGUILayout.HelpBox("No biomes available. Click 'Reinitialize Biome System' to try again.", MessageType.Warning); // Removed as per new_code
+            // } // Removed as per new_code
 
             EditorGUILayout.Space();
 

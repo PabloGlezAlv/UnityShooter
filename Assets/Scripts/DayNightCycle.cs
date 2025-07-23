@@ -9,29 +9,29 @@ public class DayNightCycle : MonoBehaviour
     [Tooltip("La luz direccional que representa la luna")]
     public Light moonLight;
 
-    [Header("Configuración del ciclo")]
-    [Tooltip("Duración del día completo en segundos")]
+    [Header("Configuraciï¿½n del ciclo")]
+    [Tooltip("Duraciï¿½n del dï¿½a completo en segundos")]
     public float dayDuration = 600f; // 10 minutos por defecto
 
     [Range(0f, 1f)]
-    [Tooltip("Hora del día actual (0-1)")]
+    [Tooltip("Hora del dï¿½a actual (0-1)")]
     public float timeOfDay = 0.25f; // Comienza a las 6:00 am
 
-    [Tooltip("Determina si el ciclo avanza automáticamente")]
+    [Tooltip("Determina si el ciclo avanza automï¿½ticamente")]
     public bool cyclePaused = false;
 
-    [Header("Configuración del sol")]
-    [Tooltip("Colores del cielo durante el día")]
+    [Header("Configuraciï¿½n del sol")]
+    [Tooltip("Colores del cielo durante el dï¿½a")]
     public Gradient sunColorGradient;
 
     [Tooltip("Intensidad de la luz solar durante el ciclo")]
     public AnimationCurve sunIntensityCurve;
 
     [Range(0f, 8f)]
-    [Tooltip("Intensidad máxima de la luz solar")]
+    [Tooltip("Intensidad mï¿½xima de la luz solar")]
     public float maxSunIntensity = 1f;
 
-    [Header("Configuración de la luna")]
+    [Header("Configuraciï¿½n de la luna")]
     [Tooltip("Colores de la luna durante la noche")]
     public Gradient moonColorGradient;
 
@@ -39,20 +39,20 @@ public class DayNightCycle : MonoBehaviour
     public AnimationCurve moonIntensityCurve;
 
     [Range(0f, 8f)]
-    [Tooltip("Intensidad máxima de la luz lunar")]
+    [Tooltip("Intensidad mï¿½xima de la luz lunar")]
     public float maxMoonIntensity = 0.3f;
 
-    [Header("Configuración de Transición")]
-    [Tooltip("Duración de la transición día-noche en proporción del día (0-0.2)")]
+    [Header("Configuraciï¿½n de Transiciï¿½n")]
+    [Tooltip("Duraciï¿½n de la transiciï¿½n dï¿½a-noche en proporciï¿½n del dï¿½a (0-0.2)")]
     [Range(0.01f, 0.2f)]
-    public float transitionDuration = 0.1f; // 10% del día
+    public float transitionDuration = 0.1f; // 10% del dï¿½a
 
-    [Tooltip("Hora del día en que comienza el atardecer (0-1)")]
+    [Tooltip("Hora del dï¿½a en que comienza el atardecer (0-1)")]
     [Range(0.4f, 0.6f)]
-    public float sunsetTime = 0.5f; // Medio día
+    public float sunsetTime = 0.5f; // Medio dï¿½a
 
-    [Tooltip("Duración del ciclo lunar en días")]
-    public float lunarCycleDuration = 30f; // Duración del ciclo lunar en días
+    [Tooltip("Duraciï¿½n del ciclo lunar en dï¿½as")]
+    public float lunarCycleDuration = 30f; // Duraciï¿½n del ciclo lunar en dï¿½as
 
     [Range(0f, 1f)]
     [Tooltip("Fase lunar inicial (0-1)")]
@@ -61,7 +61,7 @@ public class DayNightCycle : MonoBehaviour
     [Tooltip("Objetos que representan las distintas fases de la luna")]
     public GameObject[] moonPhaseObjects;
 
-    [Tooltip("Ángulo de desfase entre el sol y la luna (generalmente cercano a 180°)")]
+    [Tooltip("ï¿½ngulo de desfase entre el sol y la luna (generalmente cercano a 180ï¿½)")]
     [Range(0f, 360f)]
     public float moonSunOffset = 180f;
 
@@ -73,7 +73,7 @@ public class DayNightCycle : MonoBehaviour
     public AnimationCurve starsIntensityCurve;
 
     [Header("Niebla y Ambiente")]
-    [Tooltip("¿Usar niebla para simular cambios atmosféricos?")]
+    [Tooltip("ï¿½Usar niebla para simular cambios atmosfï¿½ricos?")]
     public bool useFog = true;
 
     [Tooltip("Colores de la niebla durante el ciclo")]
@@ -82,7 +82,7 @@ public class DayNightCycle : MonoBehaviour
     [Tooltip("Densidad de la niebla durante el ciclo")]
     public AnimationCurve fogDensityCurve;
 
-    [Tooltip("Densidad máxima de la niebla")]
+    [Tooltip("Densidad mï¿½xima de la niebla")]
     public float maxFogDensity = 0.05f;
 
     // Variables privadas para el ciclo
@@ -102,7 +102,7 @@ public class DayNightCycle : MonoBehaviour
         if (sunLight == null)
         {
             // Buscar la luz direccional en la escena
-            Light[] lights = FindObjectsOfType<Light>();
+            Light[] lights = FindObjectsByType<Light>(FindObjectsSortMode.None);
             foreach (Light light in lights)
             {
                 if (light.type == LightType.Directional && light.name.ToLower().Contains("sun"))
@@ -126,7 +126,7 @@ public class DayNightCycle : MonoBehaviour
         // Crear o asignar luz lunar si no existe
         if (moonLight == null)
         {
-            Light[] lights = FindObjectsOfType<Light>();
+            Light[] lights = FindObjectsByType<Light>(FindObjectsSortMode.None);
             foreach (Light light in lights)
             {
                 if (light.type == LightType.Directional && light.name.ToLower().Contains("moon"))
@@ -173,21 +173,21 @@ public class DayNightCycle : MonoBehaviour
             skyboxMaterial = RenderSettings.skybox;
         }
 
-        // Aplicar configuración inicial
+        // Aplicar configuraciï¿½n inicial
         UpdateLighting(timeOfDay);
     }
 
     void Update()
     {
-        // Si el ciclo no está pausado, avanzar el tiempo
+        // Si el ciclo no estï¿½ pausado, avanzar el tiempo
         if (!cyclePaused)
         {
             float previousTime = timeOfDay;
 
-            // Incrementar tiempo de día basado en la duración del ciclo
+            // Incrementar tiempo de dï¿½a basado en la duraciï¿½n del ciclo
             timeOfDay += Time.deltaTime / dayDuration;
 
-            // Detectar si pasamos a un nuevo día
+            // Detectar si pasamos a un nuevo dï¿½a
             if (timeOfDay >= 1f)
             {
                 timeOfDay -= 1f;
@@ -197,17 +197,17 @@ public class DayNightCycle : MonoBehaviour
                 UpdateLunarPhase();
             }
 
-            // Actualizar iluminación
+            // Actualizar iluminaciï¿½n
             UpdateLighting(timeOfDay);
         }
     }
 
     void UpdateLighting(float time)
     {
-        // Rotación del sol (360 grados en base al tiempo)
+        // Rotaciï¿½n del sol (360 grados en base al tiempo)
         sunLight.transform.rotation = sunStartRotation * Quaternion.Euler(new Vector3((time * 360f) - 90f, 0, 0));
 
-        // Rotación de la luna (con desfase respecto al sol)
+        // Rotaciï¿½n de la luna (con desfase respecto al sol)
         if (moonLight != null)
         {
             float moonTime = (time + 0.5f) % 1f; // Desfase de 180 grados por defecto
@@ -220,8 +220,8 @@ public class DayNightCycle : MonoBehaviour
             moonLight.transform.rotation = moonStartRotation * Quaternion.Euler(new Vector3(moonAngle, 0, 0));
         }
 
-        // Calcular los momentos de transición para un blend suave
-        float sunriseStart = sunsetTime - 0.5f; // Medio día antes del atardecer
+        // Calcular los momentos de transiciï¿½n para un blend suave
+        float sunriseStart = sunsetTime - 0.5f; // Medio dï¿½a antes del atardecer
         if (sunriseStart < 0) sunriseStart += 1f;
 
         float sunriseEnd = sunriseStart + transitionDuration;
@@ -229,7 +229,7 @@ public class DayNightCycle : MonoBehaviour
 
         float sunsetEnd = (sunsetTime + transitionDuration) % 1f;
 
-        // Determinar si estamos en una transición y calcular factores de blend
+        // Determinar si estamos en una transiciï¿½n y calcular factores de blend
         float sunFactor = 1f;
         float moonFactor = 1f;
 
@@ -248,7 +248,7 @@ public class DayNightCycle : MonoBehaviour
         }
         else if (time > sunriseEnd && time < sunsetTime)
         {
-            // Día pleno
+            // Dï¿½a pleno
             sunFactor = 1f;
             moonFactor = 0f;
         }
@@ -268,10 +268,10 @@ public class DayNightCycle : MonoBehaviour
         {
             float baseMoonIntensity = moonIntensityCurve.Evaluate(time) * maxMoonIntensity;
 
-            // Ajustar intensidad según la fase lunar (máxima en luna llena)
+            // Ajustar intensidad segï¿½n la fase lunar (mï¿½xima en luna llena)
             float phaseIntensityFactor = GetLunarPhaseIntensityFactor(currentLunarPhase);
 
-            // Aplicar ambos factores: fase lunar y tiempo del día
+            // Aplicar ambos factores: fase lunar y tiempo del dï¿½a
             moonLight.intensity = baseMoonIntensity * phaseIntensityFactor * moonFactor;
             moonLight.color = moonColorGradient.Evaluate(time);
 
@@ -279,13 +279,13 @@ public class DayNightCycle : MonoBehaviour
             UpdateMoonPhaseVisuals(currentLunarPhase);
         }
 
-        // Actualizar estrellas con transición suave
+        // Actualizar estrellas con transiciï¿½n suave
         if (starsObject != null && starsIntensityCurve != null)
         {
-            // Intensidad base de las estrellas según la curva
+            // Intensidad base de las estrellas segï¿½n la curva
             float baseStarsIntensity = starsIntensityCurve.Evaluate(time);
 
-            // Aplicar factor de blend similar al de la luna (más visible en la noche)
+            // Aplicar factor de blend similar al de la luna (mï¿½s visible en la noche)
             float starsIntensity = baseStarsIntensity * moonFactor;
 
             // Si el objeto de estrellas tiene un componente Renderer
@@ -304,7 +304,7 @@ public class DayNightCycle : MonoBehaviour
             }
         }
 
-        // Actualizar niebla si está habilitada
+        // Actualizar niebla si estï¿½ habilitada
         if (useFog)
         {
             if (fogColorGradient != null)
@@ -314,7 +314,7 @@ public class DayNightCycle : MonoBehaviour
                 RenderSettings.fogDensity = fogDensityCurve.Evaluate(time) * maxFogDensity;
         }
 
-        // Actualizar skybox si está disponible
+        // Actualizar skybox si estï¿½ disponible
         if (skyboxMaterial != null)
         {
             // Esto asume que el skybox tiene una propiedad "_Exposure" para controlar el brillo
@@ -322,17 +322,17 @@ public class DayNightCycle : MonoBehaviour
             {
                 float dayExposure = 1.0f;
                 float nightExposure = 0.1f;
-                // Usar una mezcla de factores sol/luna para la exposición
+                // Usar una mezcla de factores sol/luna para la exposiciï¿½n
                 float exposure = Mathf.Lerp(nightExposure, dayExposure, sunFactor);
                 skyboxMaterial.SetFloat("_Exposure", exposure);
             }
         }
     }
 
-    // Actualiza la fase lunar basada en los días transcurridos
+    // Actualiza la fase lunar basada en los dï¿½as transcurridos
     void UpdateLunarPhase()
     {
-        // Calcular la nueva fase lunar basada en la duración del ciclo lunar
+        // Calcular la nueva fase lunar basada en la duraciï¿½n del ciclo lunar
         currentLunarPhase = (initialLunarPhase + (elapsedDays / lunarCycleDuration)) % 1f;
 
         // Actualizar visuales de la fase lunar
@@ -345,7 +345,7 @@ public class DayNightCycle : MonoBehaviour
         if (moonPhaseObjects == null || moonPhaseObjects.Length == 0)
             return;
 
-        // Determinar qué fase lunar mostrar
+        // Determinar quï¿½ fase lunar mostrar
         int totalPhases = moonPhaseObjects.Length;
         int activePhase = Mathf.FloorToInt(phase * totalPhases) % totalPhases;
 
@@ -357,24 +357,24 @@ public class DayNightCycle : MonoBehaviour
         }
     }
 
-    // Calcula el factor de intensidad basado en la fase lunar (máxima en luna llena)
+    // Calcula el factor de intensidad basado en la fase lunar (mï¿½xima en luna llena)
     float GetLunarPhaseIntensityFactor(float phase)
     {
-        // La fase 0.5 es luna llena (máxima luz)
-        // La fase 0.0 es luna nueva (mínima luz)
+        // La fase 0.5 es luna llena (mï¿½xima luz)
+        // La fase 0.0 es luna nueva (mï¿½nima luz)
 
-        // Transformar la fase para que el valor máximo sea en luna llena
+        // Transformar la fase para que el valor mï¿½ximo sea en luna llena
         float offsetPhase = (phase + 0.5f) % 1f;
 
-        // Calcular un factor sinusoidal (máximo en 0.5, mínimo en 0.0 y 1.0)
+        // Calcular un factor sinusoidal (mï¿½ximo en 0.5, mï¿½nimo en 0.0 y 1.0)
         // Sen(x*PI) da un resultado de 0 a 1 y luego a 0 para x de 0 a 1
         return Mathf.Sin(offsetPhase * Mathf.PI);
     }
 
-    // Métodos públicos para controlar el ciclo
+    // Mï¿½todos pï¿½blicos para controlar el ciclo
 
     /// <summary>
-    /// Establece la hora del día (0-1 donde 0=medianoche, 0.25=amanecer, 0.5=mediodía, 0.75=atardecer)
+    /// Establece la hora del dï¿½a (0-1 donde 0=medianoche, 0.25=amanecer, 0.5=mediodï¿½a, 0.75=atardecer)
     /// </summary>
     public void SetTimeOfDay(float time)
     {
@@ -383,7 +383,7 @@ public class DayNightCycle : MonoBehaviour
     }
 
     /// <summary>
-    /// Pausa o reanuda el ciclo de día y noche
+    /// Pausa o reanuda el ciclo de dï¿½a y noche
     /// </summary>
     public void TogglePause()
     {
@@ -391,7 +391,7 @@ public class DayNightCycle : MonoBehaviour
     }
 
     /// <summary>
-    /// Establece la velocidad del ciclo cambiando la duración del día
+    /// Establece la velocidad del ciclo cambiando la duraciï¿½n del dï¿½a
     /// </summary>
     public void SetCycleSpeed(float secondsPerDay)
     {
@@ -408,7 +408,7 @@ public class DayNightCycle : MonoBehaviour
     }
 
     /// <summary>
-    /// Establece la duración de las transiciones día-noche
+    /// Establece la duraciï¿½n de las transiciones dï¿½a-noche
     /// </summary>
     public void SetTransitionDuration(float duration)
     {
@@ -416,7 +416,7 @@ public class DayNightCycle : MonoBehaviour
     }
 
     /// <summary>
-    /// Convierte la hora del día a formato de texto (HH:MM)
+    /// Convierte la hora del dï¿½a a formato de texto (HH:MM)
     /// </summary>
     public string GetTimeString()
     {
@@ -433,7 +433,7 @@ public class DayNightCycle : MonoBehaviour
     /// </summary>
     public string GetLunarPhaseName()
     {
-        // Determinar nombre de la fase lunar según el valor
+        // Determinar nombre de la fase lunar segï¿½n el valor
         if (currentLunarPhase < 0.06f || currentLunarPhase > 0.94f)
             return "Luna Nueva";
         else if (currentLunarPhase < 0.19f)
@@ -452,7 +452,7 @@ public class DayNightCycle : MonoBehaviour
             return "Luna Menguante";
     }
 
-    // Al desactivar el componente, restaurar configuración original
+    // Al desactivar el componente, restaurar configuraciï¿½n original
     void OnDisable()
     {
         if (sunLight != null)
