@@ -111,7 +111,8 @@ public class TerrainGenerator : MonoBehaviour
                             mapMaterial,
                             enableWater,
                             waterThreshold,
-                            waterMaterial
+                            waterMaterial,
+                            textureSettings
                         );
 
                         terrainChunkDictionary.Add(viewedChunkCoord, newChunk);

@@ -105,15 +105,15 @@ public class MapPreview : MonoBehaviour
         textureData.ApplyToMaterial(terrainMaterial);
         textureData.UpdateMeshHeights(terrainMaterial, heightMapSettings.minHeight, heightMapSettings.maxHeight);
 
-        HeightMap heightMap = HeightMapGenerator.GenerateHeightMap(meshSettings.numVertsPerLine, meshSettings.numVertsPerLine, heightMapSettings, Vector2.zero, Vector2.zero, meshSettings.meshWorldSize);
+        TerrainData terrainData = HeightMapGenerator.GenerateTerrainData(meshSettings.numVertsPerLine, meshSettings.numVertsPerLine, heightMapSettings, Vector2.zero, Vector2.zero, meshSettings.meshWorldSize, textureData);
 
         if (drawMode == DrawMode.NoiseMap)
         {
-            DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
+            DrawTexture(TextureGenerator.TextureFromHeightMap(terrainData.heightMap));
         }
         else if (drawMode == DrawMode.Mesh)
         {
-            DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, editorPreviewLOD));
+            DrawMesh(MeshGenerator.GenerateTerrainMesh(terrainData.heightMap.values, meshSettings, editorPreviewLOD, terrainData.biomeMap));
         }
         else if (drawMode == DrawMode.FalloffMap)
         {
@@ -121,7 +121,7 @@ public class MapPreview : MonoBehaviour
         }
         else if (drawMode == DrawMode.BiomeMesh)
         {
-            DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, editorPreviewLOD));
+            DrawMesh(MeshGenerator.GenerateTerrainMesh(terrainData.heightMap.values, meshSettings, editorPreviewLOD, terrainData.biomeMap));
         }
         else if (drawMode == DrawMode.BiomeMap)
         {

@@ -188,7 +188,7 @@ public static class BiomeSystem
     }
 
     /// <summary>
-    /// Obtiene los datos de bioma para una posici�n en el mundo
+    /// Obtiene los datos de bioma para una posicin en el mundo, utilizando la cach
     /// </summary>
     public static BiomeData GetBiomeData(Vector3 worldPosition)
     {
@@ -204,13 +204,26 @@ public static class BiomeSystem
             return biomeData;
         }
 
-        BiomeData generated = GenerateBiomeData(worldPosition);
+        BiomeData generated = GenerateBiomeDataForPosition(worldPosition);
         biomeDataCache[chunkCoord] = generated;
         return generated;
     }
 
     /// <summary>
-    /// Limpia la cach� de datos de bioma
+    /// Obtiene los datos de bioma para una posicin especfica del mundo (vrtice), sin usar cach
+    /// </summary>
+    public static BiomeData GetBiomeDataForVertex(Vector3 worldPosition)
+    {
+        if (biomes.Count == 0)
+        {
+            Initialize();
+        }
+
+        return GenerateBiomeDataForPosition(worldPosition);
+    }
+
+    /// <summary>
+    /// Limpia la cach de datos de bioma
     /// </summary>
     public static void ClearCache()
     {
@@ -244,7 +257,7 @@ public static class BiomeSystem
     /// <summary>
     /// Genera los datos de bioma para un chunk específico
     /// </summary>
-    private static BiomeData GenerateBiomeData(Vector3 worldPosition)
+    private static BiomeData GenerateBiomeDataForPosition(Vector3 worldPosition)
     {
         float temperature = Mathf.PerlinNoise(
             worldPosition.x * temperatureNoiseScale,
@@ -343,7 +356,7 @@ public static class BiomeSystem
 
                 if (!biomeDataCache.ContainsKey(chunkPos))
                 {
-                    biomeDataCache[chunkPos] = GenerateBiomeData(new Vector3(worldPos.x, 0, worldPos.y));
+                    biomeDataCache[chunkPos] = GenerateBiomeDataForPosition(new Vector3(worldPos.x, 0, worldPos.y));
                 }
             }
         }

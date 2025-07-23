@@ -5,7 +5,7 @@ public static class MeshGenerator
 {
 
 
-    public static MeshData GenerateTerrainMesh(float[,] heightMap, MeshSettings meshSettings, int levelOfDetail)
+    public static MeshData GenerateTerrainMesh(float[,] heightMap, MeshSettings meshSettings, int levelOfDetail, BiomeMap biomeMap)
     {
 
         int skipIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
@@ -55,6 +55,11 @@ public static class MeshGenerator
                     Vector2 percent = new Vector2(x - 1, y - 1) / (numVertsPerLine - 3);
                     Vector2 vertexPosition2D = topLeft + new Vector2(percent.x, -percent.y) * meshSettings.meshWorldSize;
                     float height = heightMap[x, y];
+                    
+                    int biomeMapIndex = y * numVertsPerLine + x;
+                    Vector4 biomeStrengths = biomeMap.biomeStrengths[biomeMapIndex];
+                    Vector4 biomeIndexes = biomeMap.biomeIndexes[biomeMapIndex];
+
 
                     if (isEdgeConnectionVertex)
                     {
@@ -75,7 +80,7 @@ public static class MeshGenerator
                         meshData.DeclareEdgeConnectionVertex(edgeConnectionVertexData);
                     }
 
-                    meshData.AddVertex(new Vector3(vertexPosition2D.x, height, vertexPosition2D.y), percent, vertexIndex);
+                    meshData.AddVertex(new Vector3(vertexPosition2D.x, height, vertexPosition2D.y), percent, vertexIndex, biomeStrengths, biomeIndexes);
 
                     bool createTriangle = x < numVertsPerLine - 1 && y < numVertsPerLine - 1 && (!isEdgeConnectionVertex || (x != 2 && y != 2));
 
@@ -134,6 +139,8 @@ public class MeshData
     Vector3[] vertices;
     int[] triangles;
     Vector2[] uvs;
+    Vector4[] uvs2;
+    Vector4[] uvs3;
     Vector3[] bakedNormals;
 
     Vector3[] outOfMeshVertices;
@@ -158,6 +165,8 @@ public class MeshData
 
         vertices = new Vector3[numMeshEdgeVertices + numEdgeConnectionVertices + numMainVertices];
         uvs = new Vector2[vertices.Length];
+        uvs2 = new Vector4[vertices.Length];
+        uvs3 = new Vector4[vertices.Length];
         edgeConnectionVertices = new EdgeConnectionVertexData[numEdgeConnectionVertices];
 
         int numMeshEdgeTriangles = 8 * (numVertsPerLine - 4);
@@ -168,7 +177,7 @@ public class MeshData
         outOfMeshTriangles = new int[24 * (numVertsPerLine - 2)];
     }
 
-    public void AddVertex(Vector3 vertexPosition, Vector2 uv, int vertexIndex)
+    public void AddVertex(Vector3 vertexPosition, Vector2 uv, int vertexIndex, Vector4 biomeStrengths, Vector4 biomeIndexes)
     {
         if (vertexIndex < 0)
         {
@@ -178,6 +187,8 @@ public class MeshData
         {
             vertices[vertexIndex] = vertexPosition;
             uvs[vertexIndex] = uv;
+            uvs2[vertexIndex] = biomeStrengths;
+            uvs3[vertexIndex] = biomeIndexes;
         }
     }
 
@@ -299,16 +310,22 @@ public class MeshData
     {
         Vector3[] flatShadedVertices = new Vector3[triangles.Length];
         Vector2[] flatShadedUvs = new Vector2[triangles.Length];
+        Vector4[] flatShadedUvs2 = new Vector4[triangles.Length];
+        Vector4[] flatShadedUvs3 = new Vector4[triangles.Length];
 
         for (int i = 0; i < triangles.Length; i++)
         {
             flatShadedVertices[i] = vertices[triangles[i]];
             flatShadedUvs[i] = uvs[triangles[i]];
+            flatShadedUvs2[i] = uvs2[triangles[i]];
+            flatShadedUvs3[i] = uvs3[triangles[i]];
             triangles[i] = i;
         }
 
         vertices = flatShadedVertices;
         uvs = flatShadedUvs;
+        uvs2 = flatShadedUvs2;
+        uvs3 = flatShadedUvs3;
     }
 
     public Mesh CreateMesh()
@@ -317,6 +334,8 @@ public class MeshData
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.uv = uvs;
+        mesh.SetUVs(1, uvs2); // Use SetUVs for Vector4 arrays
+        mesh.SetUVs(2, uvs3); // Use SetUVs for Vector4 arrays
         if (useFlatShading)
         {
             mesh.RecalculateNormals();

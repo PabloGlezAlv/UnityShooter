@@ -21,7 +21,8 @@ public class TerrainChunk
     int colliderLODIndex;
 
     HeightMap heightMap;
-    bool heightMapReceived;
+    BiomeMap biomeMap;
+    bool terrainDataReceived;
     int previousLODIndex = -1;
     bool hasSetCollider;
     float maxViewDst;
@@ -39,10 +40,13 @@ public class TerrainChunk
     private BiomeSystem.BiomeData previousBiomeData;
     public BiomeSystem.BiomeData biomeData;
     private bool biomeDataReceived;
+    
+    // TextureData para el terreno
+    private TextureData textureSettings;
 
     public TerrainChunk(Vector2 coord, HeightMapSettings heightMapSettings, MeshSettings meshSettings, LODInfo[] detailLevels,
                          int colliderLODIndex, Transform parent, Transform viewer, Material material,
-                         bool enableWater = false, float waterThreshold = 0, Material waterMaterial = null)
+                         bool enableWater = false, float waterThreshold = 0, Material waterMaterial = null, TextureData textureSettings = null)
     {
         this.coord = coord;
         this.detailLevels = detailLevels;
@@ -50,6 +54,7 @@ public class TerrainChunk
         this.heightMapSettings = heightMapSettings;
         this.MeshSettings = meshSettings;
         this.viewer = viewer;
+        this.textureSettings = textureSettings;
 
         // Configuración del agua
         this.enableWater = enableWater;
@@ -99,7 +104,7 @@ public class TerrainChunk
     }
     private void RegenerateWithNewBiome()
     {
-        heightMapReceived = false;
+        terrainDataReceived = false;
         hasSetCollider = false;
         previousLODIndex = -1;
 
@@ -114,22 +119,23 @@ public class TerrainChunk
         Vector2 worldCenter = new Vector2(meshObject.transform.position.x, meshObject.transform.position.z);
         // Solicitar nuevo heightmap
         ThreadedDataRequester.RequestData(() =>
-            HeightMapGenerator.GenerateHeightMap(
+            HeightMapGenerator.GenerateTerrainData(
                 MeshSettings.numVertsPerLine,
                 MeshSettings.numVertsPerLine,
                 heightMapSettings,
                 sampleCentre,
                 worldCenter,
-                MeshSettings.meshWorldSize
+                MeshSettings.meshWorldSize,
+                textureSettings
             ),
-            OnHeightMapReceived);
+            OnTerrainDataReceived);
     }
     private void LoadBiomeData(Vector3 position)
     {
         biomeData = BiomeSystem.GetBiomeData(position);
         biomeDataReceived = true;
 
-        if (heightMapReceived)
+        if (terrainDataReceived)
         {
             // Opcional: Podras forzar una regeneracin si el bioma principal cambia drsticamente
             // pero con el blending vrtice a vrtice, esto puede no ser necesario.
@@ -142,22 +148,25 @@ public class TerrainChunk
     {
         Vector2 worldCenter = new Vector2(meshObject.transform.position.x, meshObject.transform.position.z);
         ThreadedDataRequester.RequestData(() =>
-            HeightMapGenerator.GenerateHeightMap(
+            HeightMapGenerator.GenerateTerrainData(
                 MeshSettings.numVertsPerLine,
                 MeshSettings.numVertsPerLine,
                 heightMapSettings,
                 sampleCentre,
                 worldCenter,
-                MeshSettings.meshWorldSize
+                MeshSettings.meshWorldSize,
+                textureSettings
             ),
-            OnHeightMapReceived
+            OnTerrainDataReceived
         );
     }
 
-    void OnHeightMapReceived(object heightMapObject)
+    void OnTerrainDataReceived(object terrainDataObject)
     {
-        this.heightMap = (HeightMap)heightMapObject;
-        heightMapReceived = true;
+        var terrainData = (TerrainData)terrainDataObject;
+        this.heightMap = terrainData.heightMap;
+        this.biomeMap = terrainData.biomeMap;
+        terrainDataReceived = true;
 
         ApplyBiomeMaterial();
 
@@ -203,7 +212,7 @@ public class TerrainChunk
         Vector3 currentWorldPos = new Vector3(sampleCentre.x, 0, sampleCentre.y);
         LoadBiomeData(currentWorldPos);
 
-        if (heightMapReceived)
+        if (terrainDataReceived)
         {
             float viewerDstFromNearestEdge = Mathf.Sqrt(bounds.SqrDistance(viewerPosition));
 
@@ -241,7 +250,7 @@ public class TerrainChunk
                     }
                     else if (!lodMesh.hasRequestedMesh)
                     {
-                        lodMesh.RequestMesh(heightMap, MeshSettings);
+                        lodMesh.RequestMesh(heightMap, MeshSettings, biomeMap);
                     }
                 }
             }
@@ -267,7 +276,7 @@ public class TerrainChunk
             {
                 if (!lodMeshes[colliderLODIndex].hasRequestedMesh)
                 {
-                    lodMeshes[colliderLODIndex].RequestMesh(heightMap, MeshSettings);
+                    lodMeshes[colliderLODIndex].RequestMesh(heightMap, MeshSettings, biomeMap);
                 }
             }
 
@@ -398,9 +407,9 @@ class LODMesh
         updateCallback();
     }
 
-    public void RequestMesh(HeightMap heightMap, MeshSettings meshSettings)
+    public void RequestMesh(HeightMap heightMap, MeshSettings meshSettings, BiomeMap biomeMap)
     {
         hasRequestedMesh = true;
-        ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, lod), OnMeshDataReceived);
+        ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, lod, biomeMap), OnMeshDataReceived);
     }
 }

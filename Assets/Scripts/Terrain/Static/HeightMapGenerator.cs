@@ -1,12 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public static class HeightMapGenerator
 {
-    public static HeightMap GenerateHeightMap(int width, int height, HeightMapSettings settings, Vector2 sampleCentre, Vector2 worldCenter, float meshWorldSize)
+    public static TerrainData GenerateTerrainData(int width, int height, HeightMapSettings settings, Vector2 sampleCentre, Vector2 worldCenter, float meshWorldSize, TextureData textureData)
     {
         float[,] values = Noise.GenerateNoiseMap(width, height, settings.noiseSettings, sampleCentre);
+
+        var biomeStrengths = new Vector4[width * height];
+        var biomeIndexes = new Vector4[width * height];
 
         AnimationCurve heightCurve = settings.heightCurve;
         Vector2 topLeft = new Vector2(-1, 1) * meshWorldSize / 2f;
@@ -14,57 +18,76 @@ public static class HeightMapGenerator
         float minValue = float.MaxValue;
         float maxValue = float.MinValue;
 
-        for (int i = 0; i < width; i++)
+        var allBiomes = BiomeSystem.GetAllBiomes();
+
+        for (int y = 0; y < height; y++)
         {
-            for (int j = 0; j < height; j++)
+            for (int x = 0; x < width; x++)
             {
-                // Calcular posición exactamente igual que en MeshGenerator
-                Vector2 percent = new Vector2(i - 1, j - 1) / (width - 3);
+                int index = y * width + x;
+                Vector2 percent = new Vector2(x - 1, y - 1) / (width - 3);
                 Vector2 vertexPosition2D = topLeft + new Vector2(percent.x, -percent.y) * meshWorldSize;
                 Vector2 vertexWorldPosition = worldCenter + vertexPosition2D;
-                
-                // Aplicar suavizado espacial muestreando posiciones vecinas
-                BiomeSystem.BiomeData blendedBiomeData = GetSmoothedBiomeData(vertexWorldPosition, meshWorldSize / width * 2f);
+
+                BiomeSystem.BiomeData biomeData = BiomeSystem.GetBiomeDataForVertex(new Vector3(vertexWorldPosition.x, 0, vertexWorldPosition.y));
+                var topBiomes = biomeData.influences.OrderByDescending(i => i.influence).ToList();
 
                 float finalHeight = 0;
-                if (blendedBiomeData.influences != null && blendedBiomeData.influences.Count > 0)
+                if (topBiomes.Count > 0)
                 {
                     float totalInfluence = 0;
-                    foreach (var influence in blendedBiomeData.influences)
+                    Vector4 strengths = Vector4.zero;
+                    Vector4 indexes = Vector4.zero;
+
+                    for (int i = 0; i < Mathf.Min(4, topBiomes.Count); i++)
                     {
-                        var biomeDef = BiomeSystem.GetAllBiomes().Find(b => b.name == influence.biomeName);
+                        var influence = topBiomes[i];
+                        var biomeDef = allBiomes.Find(b => b.name == influence.biomeName);
                         if (biomeDef != null)
                         {
-                            float biomeHeight = biomeDef.heightCurve.Evaluate(values[i, j]) * biomeDef.heightMultiplier;
+                            float biomeHeight = biomeDef.heightCurve.Evaluate(values[x, y]) * biomeDef.heightMultiplier;
                             finalHeight += biomeHeight * influence.influence;
                             totalInfluence += influence.influence;
+
+                            strengths[i] = influence.influence;
+                            indexes[i] = textureData.GetBiomeTextureIndex(biomeDef.name);
                         }
                     }
-
+                    
                     if (totalInfluence > 0)
                     {
                         finalHeight /= totalInfluence;
+                        for(int i = 0; i < 4; i++)
+                        {
+                            strengths[i] /= totalInfluence;
+                        }
                     }
+
+                    biomeStrengths[index] = strengths;
+                    biomeIndexes[index] = indexes;
                 }
                 else
                 {
-                    finalHeight = heightCurve.Evaluate(values[i, j]);
+                    finalHeight = heightCurve.Evaluate(values[x, y]);
                 }
 
-                values[i, j] = finalHeight * settings.heightMultiplier;
+                values[x, y] = finalHeight * settings.heightMultiplier;
 
-                if (values[i, j] > maxValue)
+                if (values[x, y] > maxValue)
                 {
-                    maxValue = values[i, j];
+                    maxValue = values[x, y];
                 }
-                if (values[i, j] < minValue)
+                if (values[x, y] < minValue)
                 {
-                    minValue = values[i, j];
+                    minValue = values[x, y];
                 }
             }
         }
+        
+        var heightMap = new HeightMap(values, minValue, maxValue);
+        var biomeMap = new BiomeMap(biomeStrengths, biomeIndexes);
 
-        return new HeightMap(values, minValue, maxValue);
+        return new TerrainData(heightMap, biomeMap);
     }
 
     private static BiomeSystem.BiomeData GetSmoothedBiomeData(Vector2 centerPosition, float smoothingRadius)

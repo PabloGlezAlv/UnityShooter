@@ -58,6 +58,8 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
+                float4 uv2 : TEXCOORD1;
+                float4 uv3 : TEXCOORD2;
             };
 
             struct Varyings
@@ -65,6 +67,8 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
+                float4 biomeStrengths : TEXCOORD2;
+                float4 biomeIndexes : TEXCOORD3;
             };
             
             TEXTURE2D_ARRAY(_BaseTextureArray);
@@ -125,6 +129,8 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.biomeStrengths = input.uv2;
+                output.biomeIndexes = input.uv3;
                 return output;
             }
             
@@ -136,39 +142,9 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 blendAxes /= blendAxes.x + blendAxes.y + blendAxes.z;
                 
                 // Construir arrays desde los vectores
-                float baseStartHeights[8];
-                float baseBlends[8];
-                float baseColorStrength[8];
                 float baseTextureScales[8];
                 
                 // Llenar los arrays
-                baseStartHeights[0] = _BaseStartHeights.x;
-                baseStartHeights[1] = _BaseStartHeights.y;
-                baseStartHeights[2] = _BaseStartHeights.z;
-                baseStartHeights[3] = _BaseStartHeights.w;
-                baseStartHeights[4] = _BaseStartHeights1.x;
-                baseStartHeights[5] = _BaseStartHeights1.y;
-                baseStartHeights[6] = _BaseStartHeights1.z;
-                baseStartHeights[7] = _BaseStartHeights1.w;
-                
-                baseBlends[0] = _BaseBlends.x;
-                baseBlends[1] = _BaseBlends.y;
-                baseBlends[2] = _BaseBlends.z;
-                baseBlends[3] = _BaseBlends.w;
-                baseBlends[4] = _BaseBlends1.x;
-                baseBlends[5] = _BaseBlends1.y;
-                baseBlends[6] = _BaseBlends1.z;
-                baseBlends[7] = _BaseBlends1.w;
-                
-                baseColorStrength[0] = _BaseColorStrength.x;
-                baseColorStrength[1] = _BaseColorStrength.y;
-                baseColorStrength[2] = _BaseColorStrength.z;
-                baseColorStrength[3] = _BaseColorStrength.w;
-                baseColorStrength[4] = _BaseColorStrength1.x;
-                baseColorStrength[5] = _BaseColorStrength1.y;
-                baseColorStrength[6] = _BaseColorStrength1.z;
-                baseColorStrength[7] = _BaseColorStrength1.w;
-                
                 baseTextureScales[0] = _BaseTextureScales.x;
                 baseTextureScales[1] = _BaseTextureScales.y;
                 baseTextureScales[2] = _BaseTextureScales.z;
@@ -177,30 +153,23 @@ Shader "Universal Render Pipeline/Custom/TerrainLayered"
                 baseTextureScales[5] = _BaseTextureScales1.y;
                 baseTextureScales[6] = _BaseTextureScales1.z;
                 baseTextureScales[7] = _BaseTextureScales1.w;
-                
-                // Calcular el color final
+
+                // Calcular el color final basado en el blending de biomas
                 float3 albedo = float3(0,0,0);
-                const float epsilon = 1E-4;
                 
-                for (int i = 0; i < _LayerCount; i++) {
-                    float drawStrength = InverseLerp(
-                        -baseBlends[i]/2 - epsilon, 
-                        baseBlends[i]/2, 
-                        heightPercent - baseStartHeights[i]
-                    );
-                    
-                    float3 baseColor = _BaseColors[i].rgb * baseColorStrength[i];
+                for(int i = 0; i < 4; i++)
+                {
+                    float scale = baseTextureScales[(int)input.biomeIndexes[i]];
                     float3 textureColor = TriplanarMapping(
                         input.positionWS, 
-                        baseTextureScales[i], 
+                        scale, 
                         blendAxes, 
-                        i
-                    ) * (1-baseColorStrength[i]);
-                    
-                    albedo = albedo * (1-drawStrength) + (baseColor + textureColor) * drawStrength;
+                        (int)input.biomeIndexes[i]
+                    );
+                    albedo += textureColor * input.biomeStrengths[i];
                 }
                 
-                // Aplicar iluminación básica
+                // Aplicar iluminacin bsica
                 InputData lightingInput = (InputData)0;
                 lightingInput.positionWS = input.positionWS;
                 lightingInput.normalWS = normalize(input.normalWS);

@@ -71,6 +71,18 @@ public class TextureData : UpdatableData {
         UpdateMeshHeights(material, savedMinHeight, savedMaxHeight);
     }
 
+    public int GetBiomeTextureIndex(string biomeName)
+    {
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (layers[i].biomeName == biomeName)
+            {
+                return i;
+            }
+        }
+        return 0; // default to the first layer if not found
+    }
+
     public void UpdateMeshHeights(Material material, float minHeight, float maxHeight)
     {
         savedMinHeight = minHeight;
@@ -90,6 +102,7 @@ public class TextureData : UpdatableData {
 
 	[System.Serializable]
 	public class Layer {
+        public string biomeName; // Name of the biome this layer corresponds to
 		public Texture2D texture;
 		public Color tint;
 		[Range(0,1)]
